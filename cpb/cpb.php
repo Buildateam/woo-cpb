@@ -22,10 +22,15 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit; // No direct access.
 }
 
+// Define text domain constant for use in i18n functions
+if ( ! defined( 'CPB_TEXT_DOMAIN' ) ) {
+    define( 'CPB_TEXT_DOMAIN', 'cpb' );
+}
+
 // Check if WooCommerce is active
-if ( ! in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
+if ( ! in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ), true ) ) {
     add_action( 'admin_notices', function() {
-        echo '<div class="error"><p><strong>Custom Product Builder</strong> requires WooCommerce to be installed and active.</p></div>';
+        echo wp_kses_post( '<div class="error"><p><strong>CPB - Custom Product Builder for WooCommerce</strong> requires WooCommerce to be installed and active.</p></div>' );
     });
     return;
 }
@@ -34,7 +39,7 @@ if ( ! in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins',
 add_action( 'plugins_loaded', function() {
     if ( class_exists( 'WooCommerce' ) && version_compare( WC()->version, '5.0', '<' ) ) {
         add_action( 'admin_notices', function() {
-            echo '<div class="error"><p><strong>Custom Product Builder</strong> requires WooCommerce 5.0 or higher. You are running ' . esc_html( WC()->version ) . '</p></div>';
+            echo wp_kses_post( '<div class="error"><p><strong>CPB - Custom Product Builder for WooCommerce</strong> requires WooCommerce 5.0 or higher. You are running ' . esc_html( WC()->version ) . '</p></div>' );
         });
         return;
     }
@@ -188,17 +193,17 @@ class CPB_Lite {
             'open_app' => sprintf(
                 '<a href="%s" target="_blank" rel="noopener noreferrer" style="color: #2271b1;">%s</a>',
                 esc_url( $cpb_url ),
-                __( 'Open App', 'cpb' )
+                __( 'Open App', CPB_TEXT_DOMAIN )
             ),
             'docs' => sprintf(
                 '<a href="%s" target="_blank" rel="noopener noreferrer" style="color: #2271b1;">%s</a>',
                 esc_url( 'https://buildateam.zendesk.com/hc/en-us/articles/40833069185300-Integrations-woocommerce-instructions' ),
-                __( 'Docs', 'cpb' )
+                __( 'Docs', CPB_TEXT_DOMAIN )
             ),
             'settings' => sprintf(
                 '<a href="%s" style="color: #2271b1;">%s</a>',
                 esc_url( admin_url( 'options-general.php?page=cpb-settings' ) ),
-                __( 'Settings', 'cpb' )
+                __( 'Settings', CPB_TEXT_DOMAIN )
             )
         );
 
@@ -215,7 +220,7 @@ class CPB_Lite {
                 'app_docs' => sprintf(
                     '<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
                     esc_url( 'https://buildateam.zendesk.com/hc/en-us/categories/360001615812-Custom-Product-Builder-App' ),
-                    __( 'App Docs', 'cpb' )
+                    __( 'App Docs', CPB_TEXT_DOMAIN )
                 )
             );
 
@@ -227,8 +232,8 @@ class CPB_Lite {
 
     public function add_settings_page() {
         add_options_page(
-            __( 'Custom Product Builder', self::TEXT_DOMAIN ), // page_title
-            __( 'CPB Settings', self::TEXT_DOMAIN ),           // menu_title
+            __( 'CPB - Custom Product Builder for WooCommerce', CPB_TEXT_DOMAIN ), // page_title
+            __( 'CPB Settings', CPB_TEXT_DOMAIN ),           // menu_title
             'manage_options',                                   // capability
             'cpb-settings',                                     // menu_slug
             [ $this, 'settings_page_html' ]                    // callback
@@ -249,9 +254,9 @@ class CPB_Lite {
         <div class="wrap">
             <h1>
                 <img src="<?php echo esc_url(plugin_dir_url(__FILE__) . 'assets/icon-32x32.png'); ?>"
-                     alt="<?php esc_attr_e( 'CPB Icon', self::TEXT_DOMAIN ); ?>"
+                     alt="<?php esc_attr_e( 'CPB Icon', CPB_TEXT_DOMAIN ); ?>"
                      style="width: 32px; height: 32px; vertical-align: sub; margin-right: 10px;">
-                <?php esc_html_e( 'Custom Product Builder Settings', self::TEXT_DOMAIN ); ?>
+                <?php esc_html_e( 'CPB - Custom Product Builder for WooCommerce Settings', CPB_TEXT_DOMAIN ); ?>
             </h1>
             <form method="post" action="options.php">
                 <?php settings_fields( 'cpb_settings' ); ?>
@@ -320,8 +325,8 @@ class CPB_Lite {
     public function add_external_id_field() {
         woocommerce_wp_text_input( [
             'id'          => self::META_EXT_ID,
-            'label'       => __( 'CPB External Product ID', 'cpb' ),
-            'description' => __( 'ID of the product in your external builder', 'cpb' ),
+            'label'       => __( 'CPB External Product ID', CPB_TEXT_DOMAIN ),
+            'description' => __( 'ID of the product in your external builder', CPB_TEXT_DOMAIN ),
             'desc_tip'    => true,
             'type'        => 'text',
         ] );
@@ -361,7 +366,7 @@ class CPB_Lite {
         echo '<p class="form-field" style="margin-top:12px;">';
         echo '    <a href="' . esc_url( $url ) . '" ';
         echo '       class="button button-primary" target="_blank" rel="noopener noreferrer">';
-        echo        esc_html__( 'Go to CPB admin', 'cpb' );
+        echo        esc_html__( 'Go to CPB admin', CPB_TEXT_DOMAIN );
         echo '    </a>';
         echo '</p>';
     }
@@ -528,7 +533,7 @@ class CPB_Lite {
      */
     public function load_textdomain() {
         load_plugin_textdomain(
-            self::TEXT_DOMAIN,
+            CPB_TEXT_DOMAIN,
             false,
             dirname( plugin_basename( __FILE__ ) ) . '/languages'
         );
@@ -708,8 +713,8 @@ class CPB_Lite {
 
         woocommerce_wp_checkbox( [
             'id'          => '_cpb_enabled',
-            'label'       => __( 'Enable CPB', self::TEXT_DOMAIN ),
-            'description' => __( 'Identify this product as a CPB product', self::TEXT_DOMAIN ),
+            'label'       => __( 'Enable CPB', CPB_TEXT_DOMAIN ),
+            'description' => __( 'Identify this product as a CPB product', CPB_TEXT_DOMAIN ),
             'desc_tip'    => true,
             'value'       => get_post_meta( $post->ID, '_cpb_enabled', true )
         ] );
@@ -739,7 +744,7 @@ class CPB_Lite {
         $class = 'notice notice-error';
         $message = sprintf(
             /* translators: %1$s: Plugin name, %2$s: WooCommerce link */
-            __( '%1$s requires %2$s to be installed and active.', self::TEXT_DOMAIN ),
+            __( '%1$s requires %2$s to be installed and active.', CPB_TEXT_DOMAIN ),
             '<strong>' . self::PLUGIN_NAME . '</strong>',
             '<a href="https://wordpress.org/plugins/woocommerce/" target="_blank">WooCommerce</a>'
         );
@@ -776,17 +781,17 @@ class CPB_Lite {
         // Check WordPress version
         global $wp_version;
         if ( version_compare( $wp_version, '5.0', '<' ) ) {
-            wp_die( esc_html__( 'Custom Product Builder requires WordPress 5.0 or higher.', self::TEXT_DOMAIN ) );
+            wp_die( esc_html__( 'CPB - Custom Product Builder for WooCommerce requires WordPress 5.0 or higher.', CPB_TEXT_DOMAIN ) );
         }
 
         // Check PHP version
         if ( version_compare( PHP_VERSION, '7.4', '<' ) ) {
-            wp_die( esc_html__( 'Custom Product Builder requires PHP 7.4 or higher.', self::TEXT_DOMAIN ) );
+            wp_die( esc_html__( 'CPB - Custom Product Builder for WooCommerce requires PHP 7.4 or higher.', CPB_TEXT_DOMAIN ) );
         }
 
         // Check if WooCommerce is active
         if ( ! class_exists( 'WooCommerce' ) ) {
-            wp_die( esc_html__( 'Custom Product Builder requires WooCommerce to be installed and active.', self::TEXT_DOMAIN ) );
+            wp_die( esc_html__( 'CPB - Custom Product Builder for WooCommerce requires WooCommerce to be installed and active.', CPB_TEXT_DOMAIN ) );
         }
 
         // Check WooCommerce version (with error handling)
@@ -794,7 +799,7 @@ class CPB_Lite {
             if ( version_compare( WC()->version, '5.0', '<' ) ) {
                 wp_die( sprintf(
                     /* translators: %s: WooCommerce version */
-                    esc_html__( 'Custom Product Builder requires WooCommerce 5.0 or higher. You are running %s.', self::TEXT_DOMAIN ),
+                    esc_html__( 'CPB - Custom Product Builder for WooCommerce requires WooCommerce 5.0 or higher. You are running %s.', CPB_TEXT_DOMAIN ),
                     esc_html( WC()->version )
                 ) );
             }

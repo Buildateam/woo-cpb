@@ -1,4 +1,4 @@
-=== Custom Product Builder for WooCommerce ===
+=== CPB - Custom Product Builder for WooCommerce ===
 Contributors: buildateam
 Tags: woocommerce, product-builder, customization, product-configurator, custom-products
 Requires at least: 5.0
@@ -14,7 +14,7 @@ Advanced product customization solution with drag-and-drop builder interface. Re
 
 == Description ==
 
-**Custom Product Builder for WooCommerce** is a premium solution that transforms your WooCommerce store into a powerful product customization platform. Allow your customers to create personalized products with an intuitive drag-and-drop interface.
+**CPB - Custom Product Builder for WooCommerce** is a premium solution that transforms your WooCommerce store into a powerful product customization platform. Allow your customers to create personalized products with an intuitive drag-and-drop interface.
 
 = Key Features =
 
@@ -36,7 +36,7 @@ Advanced product customization solution with drag-and-drop builder interface. Re
 
 = Requirements =
 
-This plugin requires an active **CPB (Custom Product Builder) subscription** to function. The subscription includes:
+This plugin requires an active **CPB - Custom Product Builder for WooCommerce subscription** to function. The subscription includes:
 
 * Access to the builder platform
 * Cloud hosting and processing
