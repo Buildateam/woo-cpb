@@ -9,22 +9,16 @@
  * Text Domain: cpb
  * Domain Path: /languages
  * Requires at least: 5.0
- * Tested up to: 6.8
+ * Tested up to: 6.9
  * WC requires at least: 5.0
  * WC tested up to: 9.4
  * Requires PHP: 7.4
- * Network: false
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit; // No direct access.
-}
-
-// Define text domain constant for use in i18n functions
-if ( ! defined( 'CPB_TEXT_DOMAIN' ) ) {
-    define( 'CPB_TEXT_DOMAIN', 'cpb' );
 }
 
 // Check if WooCommerce is active
@@ -72,7 +66,6 @@ class CPB_Lite {
 
     public function __construct() {
         /* Initialization -------------------------------------------- */
-        add_action( 'init', [ $this, 'load_textdomain' ] );
         add_action( 'before_woocommerce_init', [ $this, 'declare_hpos_compatibility' ] );
 
         // Initialize WooCommerce.com updater
@@ -145,11 +138,11 @@ class CPB_Lite {
 
         if ( ! empty( $custom_script_url ) && filter_var( $custom_script_url, FILTER_VALIDATE_URL ) ) {
             // Extract domain from custom script URL
-            $parsed_url = parse_url( $custom_script_url );
+            $parsed_url = wp_parse_url( $custom_script_url );
             $base_url = $parsed_url['scheme'] . '://' . $parsed_url['host'];
         } else {
             // Fall back to extracting from CPB_URL constant
-            $parsed_url = parse_url( self::CPB_URL );
+            $parsed_url = wp_parse_url( self::CPB_URL );
             $base_url = $parsed_url['scheme'] . '://' . $parsed_url['host'];
         }
 
@@ -193,17 +186,17 @@ class CPB_Lite {
             'open_app' => sprintf(
                 '<a href="%s" target="_blank" rel="noopener noreferrer" style="color: #2271b1;">%s</a>',
                 esc_url( $cpb_url ),
-                __( 'Open App', CPB_TEXT_DOMAIN )
+                __( 'Open App', 'cpb' )
             ),
             'docs' => sprintf(
                 '<a href="%s" target="_blank" rel="noopener noreferrer" style="color: #2271b1;">%s</a>',
                 esc_url( 'https://buildateam.zendesk.com/hc/en-us/articles/40833069185300-Integrations-woocommerce-instructions' ),
-                __( 'Docs', CPB_TEXT_DOMAIN )
+                __( 'Docs', 'cpb' )
             ),
             'settings' => sprintf(
                 '<a href="%s" style="color: #2271b1;">%s</a>',
                 esc_url( admin_url( 'options-general.php?page=cpb-settings' ) ),
-                __( 'Settings', CPB_TEXT_DOMAIN )
+                __( 'Settings', 'cpb' )
             )
         );
 
@@ -220,7 +213,7 @@ class CPB_Lite {
                 'app_docs' => sprintf(
                     '<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
                     esc_url( 'https://buildateam.zendesk.com/hc/en-us/categories/360001615812-Custom-Product-Builder-App' ),
-                    __( 'App Docs', CPB_TEXT_DOMAIN )
+                    __( 'App Docs', 'cpb' )
                 )
             );
 
@@ -232,8 +225,8 @@ class CPB_Lite {
 
     public function add_settings_page() {
         add_options_page(
-            __( 'CPB - Custom Product Builder for WooCommerce', CPB_TEXT_DOMAIN ), // page_title
-            __( 'CPB Settings', CPB_TEXT_DOMAIN ),           // menu_title
+            __( 'CPB - Custom Product Builder for WooCommerce', 'cpb' ), // page_title
+            __( 'CPB Settings', 'cpb' ),           // menu_title
             'manage_options',                                   // capability
             'cpb-settings',                                     // menu_slug
             [ $this, 'settings_page_html' ]                    // callback
@@ -243,10 +236,20 @@ class CPB_Lite {
 
     /** Registers our shop-level options. */
     public function register_settings() {
-        register_setting( 'cpb_settings', self::OPTION_SHOP_NAME );
-        register_setting( 'cpb_settings', self::OPTION_SHOP_ID   );
-        register_setting( 'cpb_settings', self::OPTION_USE_DEFAULT_INITIALIZER );
-        register_setting( 'cpb_settings', self::OPTION_SCRIPT_URL );
+        register_setting( 'cpb_settings', self::OPTION_SHOP_NAME, array(
+            'sanitize_callback' => 'sanitize_text_field'
+        ) );
+        register_setting( 'cpb_settings', self::OPTION_SHOP_ID, array(
+            'sanitize_callback' => 'sanitize_text_field'
+        ) );
+        register_setting( 'cpb_settings', self::OPTION_USE_DEFAULT_INITIALIZER, array(
+            'sanitize_callback' => function( $value ) {
+                return $value ? '1' : '0';
+            }
+        ) );
+        register_setting( 'cpb_settings', self::OPTION_SCRIPT_URL, array(
+            'sanitize_callback' => 'esc_url_raw'
+        ) );
     }
 
     /** Renders the settings page. */
@@ -254,9 +257,9 @@ class CPB_Lite {
         <div class="wrap">
             <h1>
                 <img src="<?php echo esc_url(plugin_dir_url(__FILE__) . 'assets/icon-32x32.png'); ?>"
-                     alt="<?php esc_attr_e( 'CPB Icon', CPB_TEXT_DOMAIN ); ?>"
+                     alt="<?php esc_attr_e( 'CPB Icon', 'cpb' ); ?>"
                      style="width: 32px; height: 32px; vertical-align: sub; margin-right: 10px;">
-                <?php esc_html_e( 'CPB - Custom Product Builder for WooCommerce Settings', CPB_TEXT_DOMAIN ); ?>
+                <?php esc_html_e( 'CPB - Custom Product Builder for WooCommerce Settings', 'cpb' ); ?>
             </h1>
             <form method="post" action="options.php">
                 <?php settings_fields( 'cpb_settings' ); ?>
@@ -325,8 +328,8 @@ class CPB_Lite {
     public function add_external_id_field() {
         woocommerce_wp_text_input( [
             'id'          => self::META_EXT_ID,
-            'label'       => __( 'CPB External Product ID', CPB_TEXT_DOMAIN ),
-            'description' => __( 'ID of the product in your external builder', CPB_TEXT_DOMAIN ),
+            'label'       => __( 'CPB External Product ID', 'cpb' ),
+            'description' => __( 'ID of the product in your external builder', 'cpb' ),
             'desc_tip'    => true,
             'type'        => 'text',
         ] );
@@ -366,7 +369,7 @@ class CPB_Lite {
         echo '<p class="form-field" style="margin-top:12px;">';
         echo '    <a href="' . esc_url( $url ) . '" ';
         echo '       class="button button-primary" target="_blank" rel="noopener noreferrer">';
-        echo        esc_html__( 'Go to CPB admin', CPB_TEXT_DOMAIN );
+        echo        esc_html__( 'Go to CPB admin', 'cpb' );
         echo '    </a>';
         echo '</p>';
     }
@@ -418,40 +421,26 @@ class CPB_Lite {
             true // footer
         );
 
-        $move_js = <<<JS
-        document.addEventListener('DOMContentLoaded',function(){
-
-
-            var intervalId = setInterval(() => {
-                var b=document.getElementById('product-builder');
-                if(!b){return;}
-
-                // Set woocommerce product ID data-attribute (used for cart)
-                b.setAttribute('data-woo-product-id', '{$woo_product_id}');
-
-                // Find the main product container
-                var productContainer = document.querySelector('body .woocommerce.product, body .woocommerce.product > main, .single-product-summary, .woocommerce div.product, .entry-summary');
-
-                if(productContainer){
-                    // Hide the original product content with CSS instead of removing
-
-                    // Insert CPB builder right after the product container
-                    productContainer.parentNode.insertBefore(b, productContainer.nextSibling);
-                } else {
-                    // Fallback: try to insert after notices if product container not found
-                    var notice=document.querySelector('.wp-block-woocommerce-store-notices, .wc-block-store-notices');
-                    if(notice&&notice.parentNode){
-                        notice.parentNode.insertBefore(b, notice.nextSibling);
-                    }
-                }
-                clearInterval(intervalId);
-            }, 1000);
-
-            setTimeout(() => {
-                clearInterval(intervalId);
-            }, 10000);
-        });
-        JS;
+        $move_js = "document.addEventListener('DOMContentLoaded',function(){" .
+            "var intervalId = setInterval(() => {" .
+            "var b=document.getElementById('product-builder');" .
+            "if(!b){return;}" .
+            "b.setAttribute('data-woo-product-id', '" . esc_attr( $woo_product_id ) . "');" .
+            "var productContainer = document.querySelector('body .woocommerce.product, body .woocommerce.product > main, .single-product-summary, .woocommerce div.product, .entry-summary');" .
+            "if(productContainer){" .
+            "productContainer.parentNode.insertBefore(b, productContainer.nextSibling);" .
+            "} else {" .
+            "var notice=document.querySelector('.wp-block-woocommerce-store-notices, .wc-block-store-notices');" .
+            "if(notice&&notice.parentNode){" .
+            "notice.parentNode.insertBefore(b, notice.nextSibling);" .
+            "}" .
+            "}" .
+            "clearInterval(intervalId);" .
+            "}, 1000);" .
+            "setTimeout(() => {" .
+            "clearInterval(intervalId);" .
+            "}, 10000);" .
+            "});";
         wp_add_inline_script( 'cpb-initializer', $move_js );
 
         $currency_data = array_merge(
@@ -468,13 +457,11 @@ class CPB_Lite {
         wp_localize_script( 'cpb-initializer', 'cpb_ajax_object', $currency_data );
 
         // Add inline script to freeze the cpb_ajax_object from accidental reassignment
-        $freeze_js = <<<JS
-        Object.freeze(cpb_ajax_object);
-        Object.defineProperty(window, 'cpb_ajax_object', {
-            writable: false,
-            configurable: false
-        });
-        JS;
+        $freeze_js = "Object.freeze(cpb_ajax_object);" .
+            "Object.defineProperty(window, 'cpb_ajax_object', {" .
+            "writable: false," .
+            "configurable: false" .
+            "});";
         wp_add_inline_script( 'cpb-initializer', $freeze_js );
 
         wp_enqueue_script( 'cpb-initializer' );
@@ -492,27 +479,10 @@ class CPB_Lite {
         wp_register_style( 'cpb-inline', false );
         wp_enqueue_style(  'cpb-inline' );
 
-        $css = <<<CSS
-        .cpb-builder-active.single-product .product {
-            display: block;
-        }
-
-        body .woocommerce.product, body .woocommerce.product > main, .single-product-summary, .woocommerce div.product, .entry-summary {
-            display: none;
-        }
-
-         #product-builder {
-            width: 100%;
-            max-width: var(--wp--style--global--wide-size, 1320px);
-            margin-inline: auto;
-            height: 100dvh;
-            box-sizing: border-box;
-        }
-
-        .cpb-builder-active .wp-block-columns.alignwide.is-layout-flex {
-            display: none !important;
-        }
-        CSS;
+        $css = ".cpb-builder-active.single-product .product { display: block; } " .
+            "body .woocommerce.product, body .woocommerce.product > main, .single-product-summary, .woocommerce div.product, .entry-summary { display: none; } " .
+            "#product-builder { width: 100%; max-width: var(--wp--style--global--wide-size, 1320px); margin-inline: auto; height: 100dvh; box-sizing: border-box; } " .
+            ".cpb-builder-active .wp-block-columns.alignwide.is-layout-flex { display: none !important; }";
 
         wp_add_inline_style( 'cpb-inline', $css );
     }
@@ -526,17 +496,6 @@ class CPB_Lite {
             }
         }
         return $classes;
-    }
-
-    /**
-     * Load plugin textdomain for translations
-     */
-    public function load_textdomain() {
-        load_plugin_textdomain(
-            CPB_TEXT_DOMAIN,
-            false,
-            dirname( plugin_basename( __FILE__ ) ) . '/languages'
-        );
     }
 
     /**
@@ -602,7 +561,7 @@ class CPB_Lite {
         $site_url = get_site_url();
 
         // Parse the URL to get the host
-        $parsed_url = parse_url( $site_url );
+        $parsed_url = wp_parse_url( $site_url );
         $host = $parsed_url['host'] ?? '';
 
         // Remove 'www.' prefix if present
@@ -713,8 +672,8 @@ class CPB_Lite {
 
         woocommerce_wp_checkbox( [
             'id'          => '_cpb_enabled',
-            'label'       => __( 'Enable CPB', CPB_TEXT_DOMAIN ),
-            'description' => __( 'Identify this product as a CPB product', CPB_TEXT_DOMAIN ),
+            'label'       => __( 'Enable CPB', 'cpb' ),
+            'description' => __( 'Identify this product as a CPB product', 'cpb' ),
             'desc_tip'    => true,
             'value'       => get_post_meta( $post->ID, '_cpb_enabled', true )
         ] );
@@ -744,7 +703,7 @@ class CPB_Lite {
         $class = 'notice notice-error';
         $message = sprintf(
             /* translators: %1$s: Plugin name, %2$s: WooCommerce link */
-            __( '%1$s requires %2$s to be installed and active.', CPB_TEXT_DOMAIN ),
+            __( '%1$s requires %2$s to be installed and active.', 'cpb' ),
             '<strong>' . self::PLUGIN_NAME . '</strong>',
             '<a href="https://wordpress.org/plugins/woocommerce/" target="_blank">WooCommerce</a>'
         );
@@ -781,17 +740,17 @@ class CPB_Lite {
         // Check WordPress version
         global $wp_version;
         if ( version_compare( $wp_version, '5.0', '<' ) ) {
-            wp_die( esc_html__( 'CPB - Custom Product Builder for WooCommerce requires WordPress 5.0 or higher.', CPB_TEXT_DOMAIN ) );
+            wp_die( esc_html__( 'CPB - Custom Product Builder for WooCommerce requires WordPress 5.0 or higher.', 'cpb' ) );
         }
 
         // Check PHP version
         if ( version_compare( PHP_VERSION, '7.4', '<' ) ) {
-            wp_die( esc_html__( 'CPB - Custom Product Builder for WooCommerce requires PHP 7.4 or higher.', CPB_TEXT_DOMAIN ) );
+            wp_die( esc_html__( 'CPB - Custom Product Builder for WooCommerce requires PHP 7.4 or higher.', 'cpb' ) );
         }
 
         // Check if WooCommerce is active
         if ( ! class_exists( 'WooCommerce' ) ) {
-            wp_die( esc_html__( 'CPB - Custom Product Builder for WooCommerce requires WooCommerce to be installed and active.', CPB_TEXT_DOMAIN ) );
+            wp_die( esc_html__( 'CPB - Custom Product Builder for WooCommerce requires WooCommerce to be installed and active.', 'cpb' ) );
         }
 
         // Check WooCommerce version (with error handling)
@@ -799,7 +758,7 @@ class CPB_Lite {
             if ( version_compare( WC()->version, '5.0', '<' ) ) {
                 wp_die( sprintf(
                     /* translators: %s: WooCommerce version */
-                    esc_html__( 'CPB - Custom Product Builder for WooCommerce requires WooCommerce 5.0 or higher. You are running %s.', CPB_TEXT_DOMAIN ),
+                    esc_html__( 'CPB - Custom Product Builder for WooCommerce requires WooCommerce 5.0 or higher. You are running %s.', 'cpb' ),
                     esc_html( WC()->version )
                 ) );
             }
@@ -844,7 +803,7 @@ class CPB_Lite {
     private static function send_lifecycle_notification( $action ) {
         // Validate action parameter
         if ( ! in_array( $action, [ 'activate', 'deactivate' ], true ) ) {
-            throw new InvalidArgumentException( 'Invalid action: ' . $action );
+            throw new InvalidArgumentException( 'Invalid action: ' . esc_html( $action ) );
         }
 
         // Generate or get secure site token
@@ -862,7 +821,7 @@ class CPB_Lite {
 
         // Validate URL
         if ( empty( $url ) || ! filter_var( $url, FILTER_VALIDATE_URL ) ) {
-            throw new Exception( 'Invalid notification URL: ' . $url );
+            throw new Exception( 'Invalid notification URL: ' . esc_url_raw( $url ) );
         }
 
         // Create secure payload
@@ -926,7 +885,7 @@ class CPB_Lite {
 
             // Check for errors (only if blocking was true)
             if ( is_wp_error( $response ) ) {
-                throw new Exception( 'HTTP request failed: ' . $response->get_error_message() );
+                throw new Exception( 'HTTP request failed: ' . esc_html( $response->get_error_message() ) );
             }
         } else {
             throw new Exception( 'wp_remote_post function not available' );
@@ -985,7 +944,7 @@ class CPB_Lite {
         $site_url = get_site_url();
 
         // Parse the URL to get the host
-        $parsed_url = parse_url( $site_url );
+        $parsed_url = wp_parse_url( $site_url );
         $host = $parsed_url['host'] ?? '';
 
         // Remove 'www.' prefix if present
