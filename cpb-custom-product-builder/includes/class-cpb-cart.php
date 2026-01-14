@@ -255,9 +255,6 @@ class CPB_Cart
     {
         error_log("[CPB][CartImage] Processing cart item key: $cart_item_key");
 
-        // DEBUG fallback image
-        // $image_path = "https://picsum.photos/seed/$cart_item_key/200";
-
         // Validate presence of customization_data
         if (! isset($cart_item['customization_data'])) {
             return $product_images;

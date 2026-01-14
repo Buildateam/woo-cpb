@@ -13,7 +13,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 /**
  * Send secure uninstall notification to CPB service
  */
-function send_cpb_uninstall_notification() {
+function cpb_lite_send_uninstall_notification() {
     // Get site token for security
     $site_token = get_option( 'cpb_site_token' );
     if ( empty( $site_token ) ) {
@@ -21,13 +21,13 @@ function send_cpb_uninstall_notification() {
     }
 
     // Get shop name using same logic as main plugin
-    $shop_name = get_cpb_shop_name_from_origin();
+    $shop_name = cpb_lite_get_shop_name_from_origin();
     if ( empty( $shop_name ) ) {
         return; // No shop name, skip notification
     }
 
     // Determine URL based on environment
-    $url = get_cpb_lifecycle_notification_url( 'uninstall' );
+    $url = cpb_lite_get_lifecycle_notification_url( 'uninstall' );
     if ( empty( $url ) ) {
         return; // No URL, skip notification
     }
@@ -72,7 +72,7 @@ function send_cpb_uninstall_notification() {
 /**
  * Get shop name from origin (simplified version for uninstall)
  */
-function get_cpb_shop_name_from_origin() {
+function cpb_lite_get_shop_name_from_origin() {
     $shop_name = get_option( 'cpb_shop_name' );
     if ( ! empty( $shop_name ) ) {
         return $shop_name;
@@ -87,13 +87,13 @@ function get_cpb_shop_name_from_origin() {
 /**
  * Get lifecycle notification URL (simplified version for uninstall)
  */
-function get_cpb_lifecycle_notification_url( $action ) {
+function cpb_lite_get_lifecycle_notification_url( $action ) {
     // Use production URL for uninstall notifications
     return 'https://app.thecustomproductbuilder.com/api/integrations/woocommerce/lifecycle/' . $action;
 }
 
 // Send secure uninstall notification before cleanup
-send_cpb_uninstall_notification();
+cpb_lite_send_uninstall_notification();
 
 // Delete plugin options
 delete_option( 'cpb_shop_name' );

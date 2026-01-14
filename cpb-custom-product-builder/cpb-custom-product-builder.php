@@ -48,7 +48,7 @@ class CPB_Lite {
     const PLUGIN_NAME = 'CPB - Custom Product Builder for WooCommerce';
     const VERSION = '1.1.0';
     const PLUGIN_VERSION = '1.1.0'; // Backward compatibility
-    const TEXT_DOMAIN = 'cpb';
+    const TEXT_DOMAIN = 'cpb-custom-product-builder';
     const OPTION_SHOP_NAME = 'cpb_shop_name';
 
     /** URL of the storefront initializer script */
@@ -250,6 +250,19 @@ class CPB_Lite {
         register_setting( 'cpb_settings', self::OPTION_SCRIPT_URL, array(
             'sanitize_callback' => 'esc_url_raw'
         ) );
+
+        // Enqueue admin settings script
+        wp_enqueue_script(
+            'cpb-admin-settings',
+            plugin_dir_url( __FILE__ ) . 'assets/admin-settings.js',
+            array(),
+            self::VERSION,
+            true
+        );
+
+        wp_localize_script( 'cpb-admin-settings', 'cpb_settings_data', array(
+            'option_use_default_initializer' => self::OPTION_USE_DEFAULT_INITIALIZER,
+        ) );
     }
 
     /** Renders the settings page. */
@@ -296,31 +309,6 @@ class CPB_Lite {
                 </table>
                 <?php submit_button(); ?>
             </form>
-
-            <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const initializerCheckbox = document.querySelector('input[name="<?php echo esc_js( self::OPTION_USE_DEFAULT_INITIALIZER ); ?>"]');
-                const scriptUrlRow = document.querySelector('tr.script-url-row');
-
-                function toggleScriptUrlField() {
-                    if (initializerCheckbox && scriptUrlRow) {
-                        if (initializerCheckbox.checked) {
-                            scriptUrlRow.style.display = '';
-                        } else {
-                            scriptUrlRow.style.display = 'none';
-                        }
-                    }
-                }
-
-                // Initial state
-                toggleScriptUrlField();
-
-                // Listen for changes
-                if (initializerCheckbox) {
-                    initializerCheckbox.addEventListener('change', toggleScriptUrlField);
-                }
-            });
-            </script>
         </div>
     <?php }
 
@@ -574,60 +562,12 @@ class CPB_Lite {
      * Add custom icon to plugin list and admin areas
      */
     public function add_plugin_list_icon() {
-        $plugin_file = plugin_basename(__FILE__);
-        $plugin_dir = plugin_dir_url(__FILE__);
-        ?>
-        <style>
-        /* Plugin list icon (16x16) */
-        .plugins tr[data-plugin="<?php echo esc_attr($plugin_file); ?>"] .plugin-title strong:before {
-            content: '';
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            background: url('<?php echo esc_url($plugin_dir . 'assets/icon-16x16.png'); ?>') no-repeat center;
-            background-size: 16px 16px;
-            margin-right: 4px;
-            vertical-align: middle;
-        }
-
-        /* Plugin list icon for Retina displays (32x32) */
-        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-            .plugins tr[data-plugin="<?php echo esc_attr($plugin_file); ?>"] .plugin-title strong:before {
-                background-image: url('<?php echo esc_url($plugin_dir . 'assets/icon-32x32.png'); ?>');
-            }
-        }
-
-        /* Plugin details modal icon (128x128) */
-        .plugin-card-<?php echo esc_attr( sanitize_title(dirname($plugin_file)) ); ?> .plugin-icon img {
-            max-width: 128px;
-            max-height: 128px;
-        }
-
-        /* Plugin banner in details (772x250) */
-        .plugin-card-<?php echo esc_attr( sanitize_title(dirname($plugin_file)) ); ?> .plugin-card-top {
-            background: url('<?php echo esc_url($plugin_dir . 'assets/banner-772x250.png'); ?>') no-repeat center;
-            background-size: cover;
-            min-height: 250px;
-        }
-
-        /* Settings page icon */
-        .settings_page_cpb-settings .wp-menu-image:before {
-            background: url('<?php echo esc_url($plugin_dir . 'assets/icon-16x16.png'); ?>') no-repeat center;
-            background-size: 16px 16px;
-            content: '';
-            width: 16px;
-            height: 16px;
-            display: inline-block;
-        }
-
-        /* High DPI settings icon */
-        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-            .settings_page_cpb-settings .wp-menu-image:before {
-                background-image: url('<?php echo esc_url($plugin_dir . 'assets/icon-32x32.png'); ?>');
-            }
-        }
-        </style>
-        <?php
+        wp_enqueue_style(
+            'cpb-admin-plugin-list',
+            plugin_dir_url( __FILE__ ) . 'assets/admin-plugin-list.css',
+            array(),
+            self::VERSION
+        );
     }
 
     /**
