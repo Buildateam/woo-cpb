@@ -13,28 +13,28 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 /**
  * Send secure uninstall notification to CPB service
  */
-function cpb_lite_send_uninstall_notification() {
+function cpbwoo_send_uninstall_notification() {
     // Get site token for security
-    $site_token = get_option( 'cpb_site_token' );
+    $site_token = get_option( 'cpbwoo_site_token' );
     if ( empty( $site_token ) ) {
         return; // No token, skip notification
     }
 
     // Get shop name using same logic as main plugin
-    $shop_name = cpb_lite_get_shop_name_from_origin();
+    $shop_name = cpbwoo_get_shop_name_from_origin();
     if ( empty( $shop_name ) ) {
         return; // No shop name, skip notification
     }
 
     // Determine URL based on environment
-    $url = cpb_lite_get_lifecycle_notification_url( 'uninstall' );
+    $url = cpbwoo_get_lifecycle_notification_url( 'uninstall' );
     if ( empty( $url ) ) {
         return; // No URL, skip notification
     }
 
     // Create secure payload
     $timestamp = time();
-    $nonce = wp_create_nonce( 'cpb_lifecycle_uninstall_' . $timestamp );
+    $nonce = wp_create_nonce( 'cpbwoo_lifecycle_uninstall_' . $timestamp );
 
     $notification_data = [
         'shop_name' => $shop_name,
@@ -72,8 +72,8 @@ function cpb_lite_send_uninstall_notification() {
 /**
  * Get shop name from origin (simplified version for uninstall)
  */
-function cpb_lite_get_shop_name_from_origin() {
-    $shop_name = get_option( 'cpb_shop_name' );
+function cpbwoo_get_shop_name_from_origin() {
+    $shop_name = get_option( 'cpbwoo_shop_name' );
     if ( ! empty( $shop_name ) ) {
         return $shop_name;
     }
@@ -87,21 +87,28 @@ function cpb_lite_get_shop_name_from_origin() {
 /**
  * Get lifecycle notification URL (simplified version for uninstall)
  */
-function cpb_lite_get_lifecycle_notification_url( $action ) {
+function cpbwoo_get_lifecycle_notification_url( $action ) {
     // Use production URL for uninstall notifications
-    return 'https://app.thecustomproductbuilder.com/api/integrations/woocommerce/lifecycle/' . $action;
+    // Path matches main plugin's get_lifecycle_notification_url()
+    return 'https://app.thecustomproductbuilder.com/cpb/platforms/woocommerce/plugin/' . $action;
 }
 
 // Send secure uninstall notification before cleanup
-cpb_lite_send_uninstall_notification();
+cpbwoo_send_uninstall_notification();
 
 // Delete plugin options
-delete_option( 'cpb_shop_name' );
-delete_option( 'cpb_shop_id' );
-delete_option( 'cpb_use_default_initializer' );
-delete_option( 'cpb_script_url' );
+delete_option( 'cpbwoo_shop_name' );
+delete_option( 'cpbwoo_shop_id' );
+delete_option( 'cpbwoo_use_default_initializer' );
+delete_option( 'cpbwoo_script_url' );
+delete_option( 'cpbwoo_site_token' );
+delete_option( 'cpbwoo_previous_subscription_status' );
 
-// Note: We intentionally do NOT delete product metadata (_is_cpb_product, _cpb_external_product_id)
+// Delete transients
+delete_transient( 'cpbwoo_subscription_weekly_check' );
+delete_transient( 'cpbwoo_exchange_rates' );
+
+// Note: We intentionally do NOT delete product metadata (_cpbwoo_enabled, _cpbwoo_external_product_id)
 // This follows WooCommerce ecosystem standards where product-related data is preserved
 // for potential plugin reinstallation. Users can manually remove CPB products if needed.
 

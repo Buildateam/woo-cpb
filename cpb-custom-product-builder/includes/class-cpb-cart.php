@@ -36,6 +36,10 @@ class CPB_Cart
     private function init_hooks()
     {
         /* CPB Cart AJAX handlers */
+        add_action('wp_ajax_cpbwoo_add_to_cart', [$this, 'add_to_cart']);
+        add_action('wp_ajax_nopriv_cpbwoo_add_to_cart', [$this, 'add_to_cart']);
+
+        /* Backward compatibility: support old AJAX action name for external scripts */
         add_action('wp_ajax_cpb_add_to_cart', [$this, 'add_to_cart']);
         add_action('wp_ajax_nopriv_cpb_add_to_cart', [$this, 'add_to_cart']);
 
@@ -64,8 +68,10 @@ class CPB_Cart
             return;
         }
 
-        // Verify nonce for security
-        if (! isset($_POST['nonce']) || ! wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'cpb_add_to_cart_nonce')) {
+        // Verify nonce for security (support both new and old nonce names for backward compatibility)
+        $nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
+        $nonce_valid = wp_verify_nonce($nonce, 'cpbwoo_add_to_cart_nonce') || wp_verify_nonce($nonce, 'cpb_add_to_cart_nonce');
+        if (! $nonce_valid) {
             wp_send_json_error(array('message' => 'Security check failed'));
             return;
         }
@@ -92,9 +98,10 @@ class CPB_Cart
         try {
             foreach ($items as $index => $item) {
                 $woo_product_id     = isset($item['woo_product_id'])     ? sanitize_text_field($item['woo_product_id']) : '';
-                $cpb_product_id     = isset($item['cpb_product_id'])     ? sanitize_text_field($item['cpb_product_id']) : '';
+                // Support both new and old field names for backward compatibility
+                $cpbwoo_product_id     = isset($item['cpbwoo_product_id']) ? sanitize_text_field($item['cpbwoo_product_id']) : (isset($item['cpb_product_id']) ? sanitize_text_field($item['cpb_product_id']) : '');
                 $quantity           = isset($item['quantity'])           ? max(1, intval($item['quantity'])) : 1;
-                $cpb_product_price  = isset($item['cpb_product_price'])  ? floatval($item['cpb_product_price']) : 0;
+                $cpbwoo_product_price  = isset($item['cpbwoo_product_price']) ? floatval($item['cpbwoo_product_price']) : (isset($item['cpb_product_price']) ? floatval($item['cpb_product_price']) : 0);
                 $customization_data = isset($item['customization_data']) ? wp_unslash($item['customization_data']) : '';
 
                 if (empty($woo_product_id)) {
@@ -123,9 +130,9 @@ class CPB_Cart
                     0,
                     [],
                     [
-                        'cpb_cart_item_key' => uniqid('cpb_ikey_'),
-                        'cpb_product_id'     => $cpb_product_id,
-                        'cpb_product_price'  => $cpb_product_price,
+                        'cpbwoo_cart_item_key' => uniqid('cpbwoo_ikey_'),
+                        'cpbwoo_product_id'     => $cpbwoo_product_id,
+                        'cpbwoo_product_price'  => $cpbwoo_product_price,
                         'customization_data' => $customization_data,
                     ]
                 );
@@ -164,8 +171,8 @@ class CPB_Cart
         }
 
         foreach ($cart->get_cart() as $cart_item_key => $cart_item) {
-            if (isset($cart_item['cpb_product_price']) && isset($cart_item['cpb_cart_item_key'])) {
-                $cart_item['data']->set_price($cart_item['cpb_product_price']);
+            if (isset($cart_item['cpbwoo_product_price']) && isset($cart_item['cpbwoo_cart_item_key'])) {
+                $cart_item['data']->set_price($cart_item['cpbwoo_product_price']);
             }
         }
     }
@@ -337,10 +344,11 @@ class CPB_Cart
             $sanitized_item = [];
 
             // Sanitize each field according to its expected type and purpose
+            // Support both new and old field names for backward compatibility
             $sanitized_item['woo_product_id'] = isset($item['woo_product_id']) ? absint($item['woo_product_id']) : 0;
-            $sanitized_item['cpb_product_id'] = isset($item['cpb_product_id']) ? sanitize_text_field($item['cpb_product_id']) : '';
+            $sanitized_item['cpbwoo_product_id'] = isset($item['cpbwoo_product_id']) ? sanitize_text_field($item['cpbwoo_product_id']) : (isset($item['cpb_product_id']) ? sanitize_text_field($item['cpb_product_id']) : '');
             $sanitized_item['quantity'] = isset($item['quantity']) ? max(1, absint($item['quantity'])) : 1;
-            $sanitized_item['cpb_product_price'] = isset($item['cpb_product_price']) ? floatval($item['cpb_product_price']) : 0;
+            $sanitized_item['cpbwoo_product_price'] = isset($item['cpbwoo_product_price']) ? floatval($item['cpbwoo_product_price']) : (isset($item['cpb_product_price']) ? floatval($item['cpb_product_price']) : 0);
 
             // Preserve JSON customization data - validate it's a string but don't sanitize content
             if (isset($item['customization_data']) && is_string($item['customization_data'])) {

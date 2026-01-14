@@ -27,7 +27,7 @@ class CPB_Currency
     /**
      * Transient key for exchange rates
      */
-    const RATES_TRANSIENT_KEY = 'cpb_exchange_rates';
+    const RATES_TRANSIENT_KEY = 'cpbwoo_exchange_rates';
 
     /**
      * Cache duration for exchange rates

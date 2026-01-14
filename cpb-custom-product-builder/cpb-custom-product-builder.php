@@ -49,7 +49,7 @@ class CPB_Lite {
     const VERSION = '1.1.0';
     const PLUGIN_VERSION = '1.1.0'; // Backward compatibility
     const TEXT_DOMAIN = 'cpb-custom-product-builder';
-    const OPTION_SHOP_NAME = 'cpb_shop_name';
+    const OPTION_SHOP_NAME = 'cpbwoo_shop_name';
 
     /** URL of the storefront initializer script */
     const CPB_URL = 'https://app.thecustomproductbuilder.com/cpb?platform=woocommerce';
@@ -57,12 +57,12 @@ class CPB_Lite {
 
     const pluginName = 'CPB';
 
-    const OPTION_SHOP_ID   = 'cpb_shop_id';
-    const OPTION_USE_DEFAULT_INITIALIZER = 'cpb_use_default_initializer';
-    const OPTION_SCRIPT_URL = 'cpb_script_url';
+    const OPTION_SHOP_ID   = 'cpbwoo_shop_id';
+    const OPTION_USE_DEFAULT_INITIALIZER = 'cpbwoo_use_default_initializer';
+    const OPTION_SCRIPT_URL = 'cpbwoo_script_url';
 
     /** Product-level meta key that links Woo and the external builder. */
-    const META_EXT_ID = '_cpb_external_product_id';
+    const META_EXT_ID = '_cpbwoo_external_product_id';
 
     public function __construct() {
         /* Initialization -------------------------------------------- */
@@ -228,7 +228,7 @@ class CPB_Lite {
             __( 'CPB - Custom Product Builder for WooCommerce', 'cpb-custom-product-builder' ), // page_title
             __( 'CPB Settings', 'cpb-custom-product-builder' ),           // menu_title
             'manage_options',                                   // capability
-            'cpb-settings',                                     // menu_slug
+            'cpbwoo-settings',                                     // menu_slug
             [ $this, 'settings_page_html' ]                    // callback
             // Note: add_options_page doesn't support icon parameter like add_menu_page
         );
@@ -236,31 +236,31 @@ class CPB_Lite {
 
     /** Registers our shop-level options. */
     public function register_settings() {
-        register_setting( 'cpb_settings', self::OPTION_SHOP_NAME, array(
+        register_setting( 'cpbwoo_settings', self::OPTION_SHOP_NAME, array(
             'sanitize_callback' => 'sanitize_text_field'
         ) );
-        register_setting( 'cpb_settings', self::OPTION_SHOP_ID, array(
+        register_setting( 'cpbwoo_settings', self::OPTION_SHOP_ID, array(
             'sanitize_callback' => 'sanitize_text_field'
         ) );
-        register_setting( 'cpb_settings', self::OPTION_USE_DEFAULT_INITIALIZER, array(
+        register_setting( 'cpbwoo_settings', self::OPTION_USE_DEFAULT_INITIALIZER, array(
             'sanitize_callback' => function( $value ) {
                 return $value ? '1' : '0';
             }
         ) );
-        register_setting( 'cpb_settings', self::OPTION_SCRIPT_URL, array(
+        register_setting( 'cpbwoo_settings', self::OPTION_SCRIPT_URL, array(
             'sanitize_callback' => 'esc_url_raw'
         ) );
 
         // Enqueue admin settings script
         wp_enqueue_script(
-            'cpb-admin-settings',
+            'cpbwoo-admin-settings',
             plugin_dir_url( __FILE__ ) . 'assets/admin-settings.js',
             array(),
             self::VERSION,
             true
         );
 
-        wp_localize_script( 'cpb-admin-settings', 'cpb_settings_data', array(
+        wp_localize_script( 'cpbwoo-admin-settings', 'cpbwoo_settings_data', array(
             'option_use_default_initializer' => self::OPTION_USE_DEFAULT_INITIALIZER,
         ) );
     }
@@ -275,7 +275,7 @@ class CPB_Lite {
                 <?php esc_html_e( 'CPB - Custom Product Builder for WooCommerce Settings', 'cpb-custom-product-builder' ); ?>
             </h1>
             <form method="post" action="options.php">
-                <?php settings_fields( 'cpb_settings' ); ?>
+                <?php settings_fields( 'cpbwoo_settings' ); ?>
                 <table class="form-table">
                     <tr>
                         <th scope="row">Use Default Initializer</th>
@@ -376,7 +376,7 @@ class CPB_Lite {
         }
 
         $external_cpb_id = get_post_meta( $product_id, self::META_EXT_ID, true );
-        $is_cpb_product_enabled = get_post_meta( $product_id, '_cpb_enabled', true );
+        $is_cpb_product_enabled = get_post_meta( $product_id, '_cpbwoo_enabled', true );
 
         return ! empty( $external_cpb_id ) || $is_cpb_product_enabled === 'yes';
     }
@@ -402,7 +402,7 @@ class CPB_Lite {
         $script_url = $this->get_script_url();
 
         wp_enqueue_script(
-            'cpb-initializer',
+            'cpbwoo-initializer',
             $script_url,
             [],
             null,
@@ -429,12 +429,13 @@ class CPB_Lite {
             "clearInterval(intervalId);" .
             "}, 10000);" .
             "});";
-        wp_add_inline_script( 'cpb-initializer', $move_js );
+        wp_add_inline_script( 'cpbwoo-initializer', $move_js );
 
         $currency_data = array_merge(
             array(
                 'ajax_url' => admin_url('admin-ajax.php'),
-                'nonce'    => wp_create_nonce('cpb_add_to_cart_nonce'),
+                'ajax_action' => 'cpbwoo_add_to_cart',
+                'nonce'    => wp_create_nonce('cpbwoo_add_to_cart_nonce'),
                 'cart_url' => wc_get_cart_url(), // Required to redirect after add to cart
             ),
             $this->currency->get_currency_data_for_frontend()
@@ -442,17 +443,26 @@ class CPB_Lite {
 
         error_log('[CPB] Localizing script with data: ' . print_r($currency_data, true));
 
-        wp_localize_script( 'cpb-initializer', 'cpb_ajax_object', $currency_data );
+        wp_localize_script( 'cpbwoo-initializer', 'cpbwoo_ajax_object', $currency_data );
 
-        // Add inline script to freeze the cpb_ajax_object from accidental reassignment
-        $freeze_js = "Object.freeze(cpb_ajax_object);" .
+        // Backward compatibility: create alias for external scripts that use old object name
+        $alias_js = "window.cpb_ajax_object = window.cpbwoo_ajax_object;";
+        wp_add_inline_script( 'cpbwoo-initializer', $alias_js );
+
+        // Add inline script to freeze the cpbwoo_ajax_object from accidental reassignment
+        $freeze_js = "Object.freeze(cpbwoo_ajax_object);" .
+            "Object.defineProperty(window, 'cpbwoo_ajax_object', {" .
+            "writable: false," .
+            "configurable: false" .
+            "});" .
+            "Object.freeze(cpb_ajax_object);" .
             "Object.defineProperty(window, 'cpb_ajax_object', {" .
             "writable: false," .
             "configurable: false" .
             "});";
-        wp_add_inline_script( 'cpb-initializer', $freeze_js );
+        wp_add_inline_script( 'cpbwoo-initializer', $freeze_js );
 
-        wp_enqueue_script( 'cpb-initializer' );
+        wp_enqueue_script( 'cpbwoo-initializer' );
     }
 
     /** Minimal inline CSS: hide leftover Gutenberg columns. */
@@ -464,15 +474,15 @@ class CPB_Lite {
         global $post;
         if ( ! $this->is_cpb_product( $post->ID ) ) return; // only CPB products
 
-        wp_register_style( 'cpb-inline', false );
-        wp_enqueue_style(  'cpb-inline' );
+        wp_register_style( 'cpbwoo-inline', false );
+        wp_enqueue_style(  'cpbwoo-inline' );
 
-        $css = ".cpb-builder-active.single-product .product { display: block; } " .
+        $css = ".cpbwoo-builder-active.single-product .product { display: block; } " .
             "body .woocommerce.product, body .woocommerce.product > main, .single-product-summary, .woocommerce div.product, .entry-summary { display: none; } " .
             "#product-builder { width: 100%; max-width: var(--wp--style--global--wide-size, 1320px); margin-inline: auto; height: 100dvh; box-sizing: border-box; } " .
-            ".cpb-builder-active .wp-block-columns.alignwide.is-layout-flex { display: none !important; }";
+            ".cpbwoo-builder-active .wp-block-columns.alignwide.is-layout-flex { display: none !important; }";
 
-        wp_add_inline_style( 'cpb-inline', $css );
+        wp_add_inline_style( 'cpbwoo-inline', $css );
     }
 
     /** Adds a body class so themes can target product‑builder pages. */
@@ -480,7 +490,7 @@ class CPB_Lite {
         if ( is_product() ) {
             global $post;
             if ( $this->is_cpb_product( $post->ID ) ) {
-                $classes[] = 'cpb-builder-active';
+                $classes[] = 'cpbwoo-builder-active';
             }
         }
         return $classes;
@@ -563,7 +573,7 @@ class CPB_Lite {
      */
     public function add_plugin_list_icon() {
         wp_enqueue_style(
-            'cpb-admin-plugin-list',
+            'cpbwoo-admin-plugin-list',
             plugin_dir_url( __FILE__ ) . 'assets/admin-plugin-list.css',
             array(),
             self::VERSION
@@ -579,7 +589,7 @@ class CPB_Lite {
             // return '';
 
             // Optionally, replace with "Customize" button
-            $class_names = 'cpb-customize-button';
+            $class_names = 'cpbwoo-customize-button';
             if ( preg_match('/class=["\']([^"\']*)["\']/', $button, $matches) ) {
                 $class_names .= ' ' . $matches[1];
             }
@@ -611,11 +621,11 @@ class CPB_Lite {
         echo '<div class="options_group">';
 
         woocommerce_wp_checkbox( [
-            'id'          => '_cpb_enabled',
+            'id'          => '_cpbwoo_enabled',
             'label'       => __( 'Enable CPB', 'cpb-custom-product-builder' ),
             'description' => __( 'Identify this product as a CPB product', 'cpb-custom-product-builder' ),
             'desc_tip'    => true,
-            'value'       => get_post_meta( $post->ID, '_cpb_enabled', true )
+            'value'       => get_post_meta( $post->ID, '_cpbwoo_enabled', true )
         ] );
 
         echo '</div>';
@@ -625,8 +635,8 @@ class CPB_Lite {
      * Save CPB Enable checkbox in product admin
      */
     public function save_cpb_enable_product_checkbox( $post_id ) {
-        $is_cpb_product = isset( $_POST['_cpb_enabled'] ) ? 'yes' : 'no';
-        update_post_meta( $post_id, '_cpb_enabled', $is_cpb_product );
+        $is_cpb_product = isset( $_POST['_cpbwoo_enabled'] ) ? 'yes' : 'no';
+        update_post_meta( $post_id, '_cpbwoo_enabled', $is_cpb_product );
     }
 
     /**
@@ -747,10 +757,10 @@ class CPB_Lite {
         }
 
         // Generate or get secure site token
-        $site_token = get_option( 'cpb_site_token' );
+        $site_token = get_option( 'cpbwoo_site_token' );
         if ( empty( $site_token ) ) {
             $site_token = wp_generate_password( 32, false );
-            update_option( 'cpb_site_token', $site_token );
+            update_option( 'cpbwoo_site_token', $site_token );
         }
 
         // Get shop name using same logic as main plugin
@@ -766,7 +776,7 @@ class CPB_Lite {
 
         // Create secure payload
         $timestamp = time();
-        $nonce = wp_create_nonce( 'cpb_lifecycle_' . $action . '_' . $timestamp );
+        $nonce = wp_create_nonce( 'cpbwoo_lifecycle_' . $action . '_' . $timestamp );
 
         // Get WooCommerce version safely
         $wc_version = 'not_installed';
@@ -914,16 +924,16 @@ class CPB_Lite {
         }
 
         // Check subscription status once per week (cached)
-        $last_check = get_transient( 'cpb_subscription_weekly_check' );
+        $last_check = get_transient( 'cpbwoo_subscription_weekly_check' );
         if ( $last_check ) {
             return; // Already checked this week
         }
 
         // Set cache for 1 week
-        set_transient( 'cpb_subscription_weekly_check', time(), WEEK_IN_SECONDS );
+        set_transient( 'cpbwoo_subscription_weekly_check', time(), WEEK_IN_SECONDS );
 
         $current_status = $this->get_wc_subscription_status();
-        $previous_status = get_option( 'cpb_previous_subscription_status', 'unknown' );
+        $previous_status = get_option( 'cpbwoo_previous_subscription_status', 'unknown' );
 
         // If status changed from active to inactive - send deactivate
         if ( $previous_status === 'active' && $current_status === 'inactive' ) {
@@ -939,7 +949,7 @@ class CPB_Lite {
         }
 
         // Update previous status
-        update_option( 'cpb_previous_subscription_status', $current_status );
+        update_option( 'cpbwoo_previous_subscription_status', $current_status );
     }
 
     /**
@@ -973,10 +983,10 @@ class CPB_Lite {
      */
     private function send_payment_notification( $action, $reason ) {
         // Generate or get secure site token
-        $site_token = get_option( 'cpb_site_token' );
+        $site_token = get_option( 'cpbwoo_site_token' );
         if ( empty( $site_token ) ) {
             $site_token = wp_generate_password( 32, false );
-            update_option( 'cpb_site_token', $site_token );
+            update_option( 'cpbwoo_site_token', $site_token );
         }
 
         // Get shop name
@@ -987,7 +997,7 @@ class CPB_Lite {
 
         // Create secure payload
         $timestamp = time();
-        $nonce = wp_create_nonce( 'cpb_payment_' . $action . '_' . $timestamp );
+        $nonce = wp_create_nonce( 'cpbwoo_payment_' . $action . '_' . $timestamp );
 
         $notification_data = [
             'shop_name' => $shop_name,
