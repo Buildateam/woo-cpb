@@ -21,25 +21,45 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit; // No direct access.
 }
 
+/**
+ * Display admin notice when WooCommerce is not active
+ * Using unique prefix 'cpbwoo_' for all function names
+ */
+function cpbwoo_woocommerce_missing_notice() {
+    echo wp_kses_post( '<div class="error"><p><strong>CPB - Custom Product Builder for WooCommerce</strong> requires WooCommerce to be installed and active.</p></div>' );
+}
+
+/**
+ * Display admin notice when WooCommerce version is too old
+ * Using unique prefix 'cpbwoo_' for all function names
+ */
+function cpbwoo_woocommerce_version_notice() {
+    if ( class_exists( 'WooCommerce' ) ) {
+        echo wp_kses_post( '<div class="error"><p><strong>CPB - Custom Product Builder for WooCommerce</strong> requires WooCommerce 5.0 or higher. You are running ' . esc_html( WC()->version ) . '</p></div>' );
+    }
+}
+
+/**
+ * Check WooCommerce version on plugins_loaded
+ * Using unique prefix 'cpbwoo_' for all function names
+ */
+function cpbwoo_check_woocommerce_version() {
+    if ( class_exists( 'WooCommerce' ) && version_compare( WC()->version, '5.0', '<' ) ) {
+        add_action( 'admin_notices', 'cpbwoo_woocommerce_version_notice' );
+        return;
+    }
+}
+
 // Check if WooCommerce is active
 if ( ! in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ), true ) ) {
-    add_action( 'admin_notices', function() {
-        echo wp_kses_post( '<div class="error"><p><strong>CPB - Custom Product Builder for WooCommerce</strong> requires WooCommerce to be installed and active.</p></div>' );
-    });
+    add_action( 'admin_notices', 'cpbwoo_woocommerce_missing_notice' );
     return;
 }
 
 // Check WooCommerce version
-add_action( 'plugins_loaded', function() {
-    if ( class_exists( 'WooCommerce' ) && version_compare( WC()->version, '5.0', '<' ) ) {
-        add_action( 'admin_notices', function() {
-            echo wp_kses_post( '<div class="error"><p><strong>CPB - Custom Product Builder for WooCommerce</strong> requires WooCommerce 5.0 or higher. You are running ' . esc_html( WC()->version ) . '</p></div>' );
-        });
-        return;
-    }
-});
+add_action( 'plugins_loaded', 'cpbwoo_check_woocommerce_version' );
 
-class CPB_Lite {
+class CPBWOO_Main {
 
     private $cart;
     private $currency;
@@ -119,13 +139,13 @@ class CPB_Lite {
     }
 
     private function init_currency_handler() {
-        require_once plugin_dir_path( __FILE__ ) . 'includes/class-cpb-currency.php';
-        $this->currency = new CPB_Currency( $this );
+        require_once plugin_dir_path( __FILE__ ) . 'includes/class-cpbwoo-currency.php';
+        $this->currency = new CPBWOO_Currency( $this );
     }
 
     private function init_cart_handler() {
-        require_once plugin_dir_path( __FILE__ ) . 'includes/class-cpb-cart.php';
-        $this->cart = new CPB_Cart( $this );
+        require_once plugin_dir_path( __FILE__ ) . 'includes/class-cpbwoo-cart.php';
+        $this->cart = new CPBWOO_Cart( $this );
     }
 
     /**
@@ -195,7 +215,7 @@ class CPB_Lite {
             ),
             'settings' => sprintf(
                 '<a href="%s" style="color: #2271b1;">%s</a>',
-                esc_url( admin_url( 'options-general.php?page=cpb-settings' ) ),
+                esc_url( admin_url( 'options-general.php?page=cpbwoo-settings' ) ),
                 __( 'Settings', 'cpb-custom-product-builder' )
             )
         );
@@ -228,10 +248,20 @@ class CPB_Lite {
             __( 'CPB - Custom Product Builder for WooCommerce', 'cpb-custom-product-builder' ), // page_title
             __( 'CPB Settings', 'cpb-custom-product-builder' ),           // menu_title
             'manage_options',                                   // capability
-            'cpbwoo-settings',                                     // menu_slug
+            'cpbwoo-settings',                                  // menu_slug (unique 6-char prefix)
             [ $this, 'settings_page_html' ]                    // callback
             // Note: add_options_page doesn't support icon parameter like add_menu_page
         );
+    }
+
+    /**
+     * Sanitize boolean value for use_default_initializer option
+     *
+     * @param mixed $value Value to sanitize
+     * @return string '1' or '0'
+     */
+    public function sanitize_boolean_option( $value ) {
+        return $value ? '1' : '0';
     }
 
     /** Registers our shop-level options. */
@@ -243,9 +273,7 @@ class CPB_Lite {
             'sanitize_callback' => 'sanitize_text_field'
         ) );
         register_setting( 'cpbwoo_settings', self::OPTION_USE_DEFAULT_INITIALIZER, array(
-            'sanitize_callback' => function( $value ) {
-                return $value ? '1' : '0';
-            }
+            'sanitize_callback' => [ $this, 'sanitize_boolean_option' ]
         ) );
         register_setting( 'cpbwoo_settings', self::OPTION_SCRIPT_URL, array(
             'sanitize_callback' => 'esc_url_raw'
@@ -261,7 +289,7 @@ class CPB_Lite {
         );
 
         wp_localize_script( 'cpbwoo-admin-settings', 'cpbwoo_settings_data', array(
-            'option_use_default_initializer' => self::OPTION_USE_DEFAULT_INITIALIZER,
+            'cpbwoo_option_use_default_initializer' => self::OPTION_USE_DEFAULT_INITIALIZER,
         ) );
     }
 
@@ -325,10 +353,28 @@ class CPB_Lite {
 
     /** Saves the external ID when the product is updated. */
     public function save_external_id_field( $product ) {
+        // Security check 1: Verify nonce (WooCommerce product edit form)
+        // Using filter_input to avoid direct $_POST access before verification
+        $nonce = filter_input( INPUT_POST, 'woocommerce_meta_nonce', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+        if ( ! $nonce || ! wp_verify_nonce( $nonce, 'woocommerce_save_data' ) ) {
+            return;
+        }
+
+        // Security check 2: Verify user has permission to edit products
+        if ( ! current_user_can( 'edit_products' ) ) {
+            return;
+        }
+
+        // Security check 3: Verify we're not doing autosave
+        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+            return;
+        }
+
+        // Now safe to access $_POST after all security checks
         if ( isset( $_POST[ self::META_EXT_ID ] ) ) {
             $product->update_meta_data(
                 self::META_EXT_ID,
-                sanitize_text_field( $_POST[ self::META_EXT_ID ] )
+                sanitize_text_field( wp_unslash( $_POST[ self::META_EXT_ID ] ) )
             );
         }
     }
@@ -433,30 +479,19 @@ class CPB_Lite {
 
         $currency_data = array_merge(
             array(
-                'ajax_url' => admin_url('admin-ajax.php'),
-                'ajax_action' => 'cpbwoo_add_to_cart',
-                'nonce'    => wp_create_nonce('cpbwoo_add_to_cart_nonce'),
-                'cart_url' => wc_get_cart_url(), // Required to redirect after add to cart
+                'cpbwoo_ajax_url'    => admin_url('admin-ajax.php'),
+                'cpbwoo_ajax_action' => 'cpbwoo_add_to_cart',
+                'cpbwoo_nonce'       => wp_create_nonce('cpbwoo_add_to_cart_nonce'),
+                'cpbwoo_cart_url'    => wc_get_cart_url(), // Required to redirect after add to cart
             ),
             $this->currency->get_currency_data_for_frontend()
         );
 
-        error_log('[CPB] Localizing script with data: ' . print_r($currency_data, true));
-
         wp_localize_script( 'cpbwoo-initializer', 'cpbwoo_ajax_object', $currency_data );
-
-        // Backward compatibility: create alias for external scripts that use old object name
-        $alias_js = "window.cpb_ajax_object = window.cpbwoo_ajax_object;";
-        wp_add_inline_script( 'cpbwoo-initializer', $alias_js );
 
         // Add inline script to freeze the cpbwoo_ajax_object from accidental reassignment
         $freeze_js = "Object.freeze(cpbwoo_ajax_object);" .
             "Object.defineProperty(window, 'cpbwoo_ajax_object', {" .
-            "writable: false," .
-            "configurable: false" .
-            "});" .
-            "Object.freeze(cpb_ajax_object);" .
-            "Object.defineProperty(window, 'cpb_ajax_object', {" .
             "writable: false," .
             "configurable: false" .
             "});";
@@ -635,8 +670,27 @@ class CPB_Lite {
      * Save CPB Enable checkbox in product admin
      */
     public function save_cpb_enable_product_checkbox( $post_id ) {
+        // Security check 1: Verify nonce (WooCommerce product edit form)
+        // Using filter_input to avoid direct $_POST access before verification
+        $nonce = filter_input( INPUT_POST, 'woocommerce_meta_nonce', FILTER_SANITIZE_FULL_SPECIAL_CHARS );
+        if ( ! $nonce || ! wp_verify_nonce( $nonce, 'woocommerce_save_data' ) ) {
+            return;
+        }
+
+        // Security check 2: Verify user has permission to edit products
+        if ( ! current_user_can( 'edit_product', $post_id ) ) {
+            return;
+        }
+
+        // Security check 3: Verify we're not doing autosave
+        if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+            return;
+        }
+
+        // Now safe to access $_POST after all security checks
+        // Sanitize and save the checkbox value
         $is_cpb_product = isset( $_POST['_cpbwoo_enabled'] ) ? 'yes' : 'no';
-        update_post_meta( $post_id, '_cpbwoo_enabled', $is_cpb_product );
+        update_post_meta( $post_id, '_cpbwoo_enabled', sanitize_text_field( $is_cpb_product ) );
     }
 
     /**
@@ -719,12 +773,11 @@ class CPB_Lite {
             add_option( self::OPTION_USE_DEFAULT_INITIALIZER, '1' );
         }
 
-        // Send activation notification (with error handling)
+        // Send activation notification (silently fail if notification cannot be sent)
         try {
             self::send_lifecycle_notification( 'activate' );
         } catch ( Exception $e ) {
-            // Log error but don't fail activation
-            error_log( '[CPB] Activation notification failed: ' . $e->getMessage() );
+            // Silently fail - don't block activation
         }
 
         // Flush rewrite rules
@@ -735,12 +788,11 @@ class CPB_Lite {
      * Plugin deactivation hook
      */
     public static function deactivate() {
-        // Send deactivation notification (with error handling)
+        // Send deactivation notification (silently fail if notification cannot be sent)
         try {
             self::send_lifecycle_notification( 'deactivate' );
         } catch ( Exception $e ) {
-            // Log error but don't fail deactivation
-            error_log( '[CPB] Deactivation notification failed: ' . $e->getMessage() );
+            // Silently fail - don't block deactivation
         }
 
         // Flush rewrite rules
@@ -803,19 +855,6 @@ class CPB_Lite {
         $json_body = wp_json_encode( $notification_data, JSON_UNESCAPED_SLASHES );
         $signature = hash_hmac( 'sha256', $json_body, $site_token );
 
-        // Debug logging
-        error_log( sprintf(
-            '[CPB] Signature debug for %s: JSON body: %s',
-            $action,
-            $json_body
-        ) );
-        error_log( sprintf(
-            '[CPB] Signature debug for %s: Generated signature: %s (token: %s...)',
-            $action,
-            $signature,
-            substr( $site_token, 0, 8 )
-        ) );
-
         // Send secure notification (non-blocking)
         if ( function_exists( 'wp_remote_post' ) ) {
             $response = wp_remote_post( $url, [
@@ -840,15 +879,6 @@ class CPB_Lite {
         } else {
             throw new Exception( 'wp_remote_post function not available' );
         }
-
-        // Log the notification attempt (without sensitive data)
-        error_log( sprintf(
-            '[CPB] Sent %s notification for shop: %s to %s (token: %s...)',
-            $action,
-            $shop_name,
-            $url,
-            substr( $site_token, 0, 8 )
-        ) );
     }
 
 
@@ -1032,22 +1062,14 @@ class CPB_Lite {
             'blocking' => false,
             'sslverify' => true
         ]);
-
-        // Log the notification
-        error_log( sprintf(
-            '[CPB] Sent payment %s notification for shop: %s (reason: %s)',
-            $action,
-            $shop_name,
-            $reason
-        ) );
     }
 
 }
 
 // Initialize plugin
-new CPB_Lite();
+new CPBWOO_Main();
 
 // Register activation/deactivation hooks
-register_activation_hook( __FILE__, [ 'CPB_Lite', 'activate' ] );
-register_deactivation_hook( __FILE__, [ 'CPB_Lite', 'deactivate' ] );
+register_activation_hook( __FILE__, [ 'CPBWOO_Main', 'activate' ] );
+register_deactivation_hook( __FILE__, [ 'CPBWOO_Main', 'deactivate' ] );
 ?>

@@ -144,6 +144,47 @@ For technical support and questions:
 * **Support Portal**: Available through your CPB dashboard
 * **Email**: support@buildateam.io
 
+== External Services ==
+
+This plugin relies on third-party external services to provide its functionality. Below is detailed information about each service:
+
+= CPB Platform (Custom Product Builder) =
+
+This plugin connects to the CPB (Custom Product Builder) platform to provide product customization functionality.
+
+**What it is used for:**
+* Loading the product builder interface on your store's product pages
+* Saving and retrieving product customization configurations
+* Processing custom product data when customers add items to cart
+* Sending plugin lifecycle notifications (activation, deactivation, uninstallation) for subscription management
+
+**What data is sent and when:**
+* **On product page load**: The plugin loads the builder interface script from the CPB platform. Site URL and product information are transmitted.
+* **On plugin activation/deactivation/uninstall**: Site URL, admin email, WordPress version, WooCommerce version, and plugin version are sent for subscription tracking.
+* **On add to cart**: Customization data (selected options, custom text, uploaded images) is processed through the platform.
+
+**Service provider**: Buildateam Inc.
+* Service URL: [https://app.thecustomproductbuilder.com](https://app.thecustomproductbuilder.com)
+* Terms of Service: [https://cpbapp.com/terms](https://cpbapp.com/terms)
+* Privacy Policy: [https://cpbapp.com/privacy](https://cpbapp.com/privacy)
+
+= ExchangeRate-API (Fallback Currency Service) =
+
+This plugin uses ExchangeRate-API as a fallback service for currency exchange rates when the primary CPB currency API is unavailable.
+
+**What it is used for:**
+* Fetching current currency exchange rates for multi-currency support
+* Converting product prices between different currencies
+
+**What data is sent and when:**
+* **On currency rate fetch (when CPB API fails)**: A simple GET request is made to retrieve USD-based exchange rates. No personal or site-specific data is transmitted.
+* Exchange rates are cached for 1 hour to minimize API calls.
+
+**Service provider**: ExchangeRate-API
+* Service URL: [https://www.exchangerate-api.com](https://www.exchangerate-api.com)
+* Terms of Service: [https://www.exchangerate-api.com/terms](https://www.exchangerate-api.com/terms)
+* Privacy Policy: [https://www.exchangerate-api.com/terms](https://www.exchangerate-api.com/terms)
+
 == About Buildateam ==
 
 Buildateam is a leading provider of e-commerce customization solutions. We specialize in creating powerful, user-friendly tools that help businesses offer personalized products to their customers.

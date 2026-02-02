@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const initializerCheckbox = document.querySelector('input[name="' + cpbwoo_settings_data.option_use_default_initializer + '"]');
+    const initializerCheckbox = document.querySelector('input[name="' + cpbwoo_settings_data.cpbwoo_option_use_default_initializer + '"]');
     const scriptUrlRow = document.querySelector('tr.script-url-row');
 
     function toggleScriptUrlField() {

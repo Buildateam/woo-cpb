@@ -1,18 +1,18 @@
 <?php
 
 /**
- * Class CPB_Currency
+ * Class CPBWOO_Currency
  *
  * Handles all currency related functionality for the Custom Product Builder WooCommerce integration.
  *
- * @package CPB
+ * @package CPBWOO
  */
 
 if (! defined('ABSPATH')) {
     exit; // Exit if accessed directly.
 }
 
-class CPB_Currency
+class CPBWOO_Currency
 {
     /**
      * Reference to main plugin instance
@@ -41,12 +41,9 @@ class CPB_Currency
     private function get_cpb_currency_api_url()
     {
         // Use the main plugin's static base URL method
-        $base_url = CPB_Lite::get_cpb_base_url();
+        $base_url = CPBWOO_Main::get_cpb_base_url();
 
-        $final_url = $base_url . '/cpb/common/currency/rates';
-        error_log('[CPB] Final currency API URL: ' . $final_url);
-
-        return $final_url;
+        return $base_url . '/cpb/common/currency/rates';
     }
 
     /**
@@ -56,8 +53,8 @@ class CPB_Currency
 
     /**
      * Constructor
-     * 
-     * @param CPB_Lite $plugin Main plugin instance
+     *
+     * @param CPBWOO_Main $plugin Main plugin instance
      */
     public function __construct($plugin)
     {
@@ -71,109 +68,75 @@ class CPB_Currency
      */
     public function get_current_currency()
     {
-        try {
-            // Validate that WooCommerce is available
-            if (!function_exists('get_woocommerce_currency')) {
-                error_log('[CPB] WooCommerce not available, cannot determine currency');
-                return 'USD'; // Safe fallback
-            }
-
-            // Try getting currency from WPML (https://wordpress.org/plugins/woocommerce-multilingual/)
-            try {
-                if (function_exists('apply_filters')) {
-                    $currency = apply_filters('wcml_price_currency', null);
-                    $currency = $this->sanitize_currency_code($currency);
-                    if ($this->is_valid_currency_code($currency)) {
-                        error_log('[CPB] Detected WPML currency: ' . $currency);
-                        return $currency;
-                    }
-                }
-            } catch (Exception $e) {
-                error_log('[CPB] Error checking WPML currency: ' . $e->getMessage());
-            }
-
-            // Try getting currency from WOOCS (https://wordpress.org/plugins/woocommerce-currency-switcher/)
-            try {
-                global $WOOCS;
-                if (is_object($WOOCS) && isset($WOOCS->current_currency) && !empty($WOOCS->current_currency)) {
-                    $woocs_currency = $this->sanitize_currency_code($WOOCS->current_currency);
-                    if ($this->is_valid_currency_code($woocs_currency)) {
-                        error_log('[CPB] Detected WOOCS currency: ' . $woocs_currency);
-                        return $woocs_currency;
-                    }
-                }
-            } catch (Exception $e) {
-                error_log('[CPB] Error checking WOOCS currency: ' . $e->getMessage());
-            }
-
-            // Try getting currency from WooCommerce session
-            try {
-                if (function_exists('WC') && WC() && WC()->session) {
-                    $session_currency = WC()->session->get('chosen_currency')
-                        ?: WC()->session->get('client_currency')
-                        ?: WC()->session->get('woocs_current_currency')
-                        ?: WC()->session->get('wmc_current_currency');
-
-                    $session_currency = $this->sanitize_currency_code($session_currency);
-                    if ($this->is_valid_currency_code($session_currency)) {
-                        error_log('[CPB] Detected WooCommerce session currency: ' . $session_currency);
-                        return $session_currency;
-                    }
-                }
-            } catch (Exception $e) {
-                error_log('[CPB] Error checking WooCommerce session currency: ' . $e->getMessage());
-            }
-
-            // Try getting currency from cookies
-            try {
-                $cookie_currency = null;
-                if (isset($_COOKIE['woocs_current_currency']) && !empty($_COOKIE['woocs_current_currency'])) {
-                    $cookie_currency = $this->sanitize_currency_code(sanitize_text_field(wp_unslash($_COOKIE['woocs_current_currency'])));
-                } elseif (isset($_COOKIE['wmc_current_currency']) && !empty($_COOKIE['wmc_current_currency'])) {
-                    $cookie_currency = $this->sanitize_currency_code(sanitize_text_field(wp_unslash($_COOKIE['wmc_current_currency'])));
-                }
-
-                if ($this->is_valid_currency_code($cookie_currency)) {
-                    error_log('[CPB] Detected currency from cookies: ' . $cookie_currency);
-                    return $cookie_currency;
-                }
-            } catch (Exception $e) {
-                error_log('[CPB] Error checking currency cookies: ' . $e->getMessage());
-            }
-
-            // Try Aelia Currency Switcher (https://aelia.co/wordpress-plugins/woocommerce-multi-currency/)
-            try {
-                if (function_exists('apply_filters')) {
-                    $aelia_currency = apply_filters('wc_aelia_cs_selected_currency', null);
-                    $aelia_currency = $this->sanitize_currency_code($aelia_currency);
-                    $default_currency = function_exists('get_woocommerce_currency') ? get_woocommerce_currency() : 'USD';
-                    if ($this->is_valid_currency_code($aelia_currency) && $aelia_currency !== $default_currency) {
-                        error_log('[CPB] Detected Aelia Currency Switcher currency: ' . $aelia_currency);
-                        return $aelia_currency;
-                    }
-                }
-            } catch (Exception $e) {
-                error_log('[CPB] Error checking Aelia Currency Switcher: ' . $e->getMessage());
-            }
-
-            // Fallback to WooCommerce default currency
-            try {
-                $default_currency = function_exists('get_woocommerce_currency') ? get_woocommerce_currency() : null;
-                if ($this->is_valid_currency_code($default_currency)) {
-                    error_log('[CPB] No currency switcher detected, using default: ' . $default_currency);
-                    return $default_currency;
-                }
-            } catch (Exception $e) {
-                error_log('[CPB] Error getting WooCommerce default currency: ' . $e->getMessage());
-            }
-
-            // Ultimate fallback
-            error_log('[CPB] All currency detection methods failed, using USD fallback');
-            return 'USD';
-        } catch (Exception $e) {
-            error_log('[CPB] Critical error in get_current_currency: ' . $e->getMessage());
+        // Validate that WooCommerce is available
+        if (!function_exists('get_woocommerce_currency')) {
             return 'USD'; // Safe fallback
         }
+
+        // Try getting currency from WPML (https://wordpress.org/plugins/woocommerce-multilingual/)
+        // NOTE: 'wcml_price_currency' is a filter hook from WPML plugin, not our code
+        if (function_exists('apply_filters')) {
+            $currency = apply_filters('wcml_price_currency', null);
+            $currency = $this->sanitize_currency_code($currency);
+            if ($this->is_valid_currency_code($currency)) {
+                return $currency;
+            }
+        }
+
+        // Try getting currency from WOOCS (https://wordpress.org/plugins/woocommerce-currency-switcher/)
+        // NOTE: $WOOCS is a global variable from WOOCS plugin, not our code
+        global $WOOCS;
+        if (is_object($WOOCS) && isset($WOOCS->current_currency) && !empty($WOOCS->current_currency)) {
+            $woocs_currency = $this->sanitize_currency_code($WOOCS->current_currency);
+            if ($this->is_valid_currency_code($woocs_currency)) {
+                return $woocs_currency;
+            }
+        }
+
+        // Try getting currency from WooCommerce session
+        if (function_exists('WC') && WC() && WC()->session) {
+            $session_currency = WC()->session->get('chosen_currency')
+                ?: WC()->session->get('client_currency')
+                ?: WC()->session->get('woocs_current_currency')
+                ?: WC()->session->get('wmc_current_currency');
+
+            $session_currency = $this->sanitize_currency_code($session_currency);
+            if ($this->is_valid_currency_code($session_currency)) {
+                return $session_currency;
+            }
+        }
+
+        // Try getting currency from cookies
+        $cookie_currency = null;
+        if (isset($_COOKIE['woocs_current_currency']) && !empty($_COOKIE['woocs_current_currency'])) {
+            $cookie_currency = $this->sanitize_currency_code(sanitize_text_field(wp_unslash($_COOKIE['woocs_current_currency'])));
+        } elseif (isset($_COOKIE['wmc_current_currency']) && !empty($_COOKIE['wmc_current_currency'])) {
+            $cookie_currency = $this->sanitize_currency_code(sanitize_text_field(wp_unslash($_COOKIE['wmc_current_currency'])));
+        }
+
+        if ($this->is_valid_currency_code($cookie_currency)) {
+            return $cookie_currency;
+        }
+
+        // Try Aelia Currency Switcher (https://aelia.co/wordpress-plugins/woocommerce-multi-currency/)
+        // NOTE: 'wc_aelia_cs_selected_currency' is a filter hook from Aelia Currency Switcher plugin, not our code
+        if (function_exists('apply_filters')) {
+            $aelia_currency = apply_filters('wc_aelia_cs_selected_currency', null);
+            $aelia_currency = $this->sanitize_currency_code($aelia_currency);
+            $default_currency = function_exists('get_woocommerce_currency') ? get_woocommerce_currency() : 'USD';
+            if ($this->is_valid_currency_code($aelia_currency) && $aelia_currency !== $default_currency) {
+                return $aelia_currency;
+            }
+        }
+
+        // Fallback to WooCommerce default currency
+        $default_currency = function_exists('get_woocommerce_currency') ? get_woocommerce_currency() : null;
+        if ($this->is_valid_currency_code($default_currency)) {
+            return $default_currency;
+        }
+
+        // Ultimate fallback
+        return 'USD';
     }
 
     /**
@@ -260,8 +223,6 @@ class CPB_Currency
      */
     public function get_exchange_rates()
     {
-        error_log('[CPB] Getting exchange rates...');
-
         $rates = get_transient(self::RATES_TRANSIENT_KEY);
 
         if (false === $rates) {
@@ -272,7 +233,6 @@ class CPB_Currency
             }
         }
 
-        error_log('[CPB] Exchange rates: ' . print_r($rates, true));
         return $rates;
     }
 
@@ -284,26 +244,20 @@ class CPB_Currency
      */
     private function fetch_exchange_rates_from_api()
     {
-        error_log('[CPB] No cached rates found, fetching from CPB backend API...');
-
         // First try CPB backend API
         $rates = $this->fetch_rates_from_cpb_backend();
 
         if ($rates) {
-            error_log('[CPB] Successfully fetched rates from CPB backend');
             return $rates;
         }
 
         // Fallback to external API
-        error_log('[CPB] CPB backend failed, trying fallback API...');
         $rates = $this->fetch_rates_from_fallback_api();
 
         if ($rates) {
-            error_log('[CPB] Successfully fetched rates from fallback API');
             return $rates;
         }
 
-        error_log('[CPB] All API requests failed');
         return false;
     }
 
@@ -319,18 +273,16 @@ class CPB_Currency
             'timeout' => 10,
             'headers' => array(
                 'Accept' => 'application/json',
-                'User-Agent' => 'CPB-WooCommerce-Plugin/' . CPB_Lite::PLUGIN_VERSION
+                'User-Agent' => 'CPB-WooCommerce-Plugin/' . CPBWOO_Main::PLUGIN_VERSION
             )
         ));
 
         if (is_wp_error($response)) {
-            error_log('[CPB] CPB backend API request failed: ' . $response->get_error_message());
             return false;
         }
 
         $response_code = wp_remote_retrieve_response_code($response);
         if ($response_code !== 200) {
-            error_log('[CPB] CPB backend API returned status: ' . $response_code);
             return false;
         }
 
@@ -338,7 +290,6 @@ class CPB_Currency
         $data = json_decode($body, true);
 
         if (!$data || !isset($data['success']) || !$data['success']) {
-            error_log('[CPB] CPB backend API returned invalid response');
             return false;
         }
 
@@ -364,7 +315,6 @@ class CPB_Currency
         ));
 
         if (is_wp_error($response)) {
-            error_log('[CPB] Fallback API request failed: ' . $response->get_error_message());
             return false;
         }
 
@@ -383,13 +333,11 @@ class CPB_Currency
 
     /**
      * Get fallback exchange rates when API fails
-     * 
+     *
      * @return array Fallback exchange rates
      */
     private function get_fallback_rates()
     {
-        error_log('[CPB] Using fallback exchange rates');
-
         return array(
             'USD' => 1,
             'EUR' => 0.85,
@@ -427,13 +375,10 @@ class CPB_Currency
             $filtered_rates[$current_currency] = $all_exchange_rates[$current_currency];
         }
 
-        error_log('[CPB] All available rates count: ' . count($all_exchange_rates));
-        error_log('[CPB] Filtered rates for frontend (' . $current_currency . '): ' . print_r($filtered_rates, true));
-
         return array(
-            'currency' => $current_currency,
-            'exchange_rates' => $filtered_rates,
-            'base_currency' => $base_currency
+            'cpbwoo_currency'       => $current_currency,
+            'cpbwoo_exchange_rates' => $filtered_rates,
+            'cpbwoo_base_currency'  => $base_currency
         );
     }
 
