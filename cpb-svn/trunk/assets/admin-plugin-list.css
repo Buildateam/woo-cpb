@@ -1,0 +1,36 @@
+/* Plugin list icon (16x16) */
+.plugins tr[data-plugin="cpb-custom-product-builder/cpb-custom-product-builder.php"] .plugin-title strong:before {
+    content: '';
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background: url('icon-16x16.png') no-repeat center;
+    background-size: 16px 16px;
+    margin-right: 4px;
+    vertical-align: middle;
+}
+
+/* Plugin list icon for Retina displays (32x32) */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .plugins tr[data-plugin="cpb-custom-product-builder/cpb-custom-product-builder.php"] .plugin-title strong:before {
+        background-image: url('icon-32x32.png');
+    }
+}
+
+/* Settings page icon */
+.settings_page_cpb-settings .wp-menu-image:before {
+    background: url('icon-16x16.png') no-repeat center;
+    background-size: 16px 16px;
+    content: '';
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+}
+
+/* High DPI settings icon */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .settings_page_cpb-settings .wp-menu-image:before {
+        background-image: url('icon-32x32.png');
+    }
+}
+

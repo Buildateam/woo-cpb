@@ -1,0 +1,42 @@
+*** CPB - Custom Product Builder for WooCommerce Changelog ***
+
+2025-01-13 - version 1.1.0
+* Fixed - Security vulnerabilities: sanitized all input variables ($_POST, $_COOKIE)
+* Fixed - Security vulnerabilities: escaped all output using esc_html(), esc_attr(), esc_url()
+* Fixed - Activation test warnings: improved error handling and function existence checks
+* Fixed - Canonical compatibility warnings: corrected add_options_page parameters
+* Fixed - Canonical compatibility warnings: replaced deprecated current_time('timestamp') with time()
+* Fixed - Canonical compatibility warnings: used global $wp_version instead of get_bloginfo('version')
+* Fixed - Validation test warnings: updated WordPress compatibility to 6.8
+* Fixed - Validation test warnings: updated WooCommerce compatibility to 9.4
+* Fixed - Validation test warnings: improved uninstall.php structure and function definitions
+* Added - App Docs link in plugin meta links for better documentation access
+* Improved - Enhanced installation mode detection using Shopify parameters
+* Improved - Added axios cache update integration for inventory API server
+* Improved - Better error handling in activation/deactivation hooks with try-catch blocks
+* Improved - More robust WooCommerce version checking with proper function existence validation
+
+2025-08-28 - version 1.0.0
+* New - Initial release for WooCommerce Marketplace
+* Added - Comprehensive WooCommerce compatibility checks
+* Added - Settings interface with shop configuration
+* Added - Support for custom script URLs with conditional visibility
+* Added - Mobile responsiveness across all devices
+* Added - Proper localization support for international stores
+* Added - Error handling and user feedback messages
+* Added - CPB icon integration for better visual identification
+* Added - Doc and Settings links in plugin actions
+* Added - Toggleable 'Use Default Initializer' option in settings
+* Added - Security with proper nonce verification
+* Added - Cart integration with custom product data handling
+* Added - Currency conversion support for international pricing
+* Added - Performance optimization for faster page loading
+* Added - Comprehensive uninstall cleanup process
+* Added - Drag-and-drop product builder interface
+* Added - Real-time preview functionality
+* Added - Advanced customization options and tools
+* Added - WooCommerce integration for seamless checkout
+* Added - Admin dashboard for plugin management
+* Added - Support for external product IDs
+* Added - Compatibility with popular WooCommerce themes
+* Added - WordPress coding standards compliance
