@@ -183,8 +183,10 @@ class CPBWOO_Main {
         // Add platform parameter
         $params = array(
             'platform' => 'woocommerce',
-            'platform_shop_name' => rawurlencode( $shop_name ),
-            'store_data' => rawurlencode( $encrypted_data )
+            // Let http_build_query() encode these once. Pre-encoding corrupts the
+            // AES-GCM payload and the backend receives non-base64 data.
+            'platform_shop_name' => $shop_name,
+            'store_data' => $encrypted_data
         );
 
         // Merge additional parameters

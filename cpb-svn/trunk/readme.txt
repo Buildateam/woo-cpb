@@ -99,6 +99,10 @@ Yes, the builder interface can be customized through your CPB dashboard. You can
 
 == Changelog ==
 
+= Unreleased =
+* Fixed - Prevented double-encoding of encrypted store data in CPB app registration and login flows
+* Fixed - Restored CPB customization properties in cart, checkout, and order line items using prefixed cart-item metadata
+
 = 1.1.0 =
 * Fixed - Security vulnerabilities: sanitized all input variables and escaped all output
 * Fixed - Activation, Canonical compatibility, and Validation test warnings
