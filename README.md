@@ -85,3 +85,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## 📝 Changelog
 
 See [CHANGELOG.md](CHANGELOG.md) for version history.
+
+## Plugin Source
+cpb-svn/trunk - cpb-custom-product-builder-{version}.zip

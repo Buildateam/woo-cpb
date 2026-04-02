@@ -2,6 +2,10 @@
 
 All notable changes to Custom Product Builder for WooCommerce.
 
+## [1.2.0] - 2025-04-02
+- Fixed - Store data decryption error preventing shop connection to CPB backend
+- Improved - Plugin update mechanism for better compatibility
+
 ## [1.1.0] - 2025-01-13
 
 ### Fixed

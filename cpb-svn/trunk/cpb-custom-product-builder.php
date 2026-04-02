@@ -3,7 +3,7 @@
  * Plugin Name: CPB - Custom Product Builder for WooCommerce
  * Plugin URI: https://cpbapp.com/integrations
  * Description: Advanced product customization solution with drag-and-drop builder interface. Requires active WooCommerce.com subscription.
- * Version: 1.1.0
+ * Version: 1.2.0
  * Author: Custom Product Builder
  * Author URI: https://cpbapp.com
  * Text Domain: cpb-custom-product-builder
@@ -66,8 +66,8 @@ class CPBWOO_Main {
 
     /** Plugin constants */
     const PLUGIN_NAME = 'CPB - Custom Product Builder for WooCommerce';
-    const VERSION = '1.1.0';
-    const PLUGIN_VERSION = '1.1.0'; // Backward compatibility
+    const VERSION = '1.2.0';
+    const PLUGIN_VERSION = '1.2.0'; // Backward compatibility
     const TEXT_DOMAIN = 'cpb-custom-product-builder';
     const OPTION_SHOP_NAME = 'cpbwoo_shop_name';
 
