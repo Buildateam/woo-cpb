@@ -202,13 +202,13 @@ class CPBWOO_Cart
      */
     public function add_customization_data_to_cart_item($item_data, $cart_item)
     {
-
-        if (!isset($cart_item['customization_data'])) {
+        $raw_data = $this->get_customization_data_string($cart_item);
+        if ($raw_data === '') {
             return $item_data;
         }
 
-        $decoded = json_decode($cart_item['customization_data'], true);
-        if (!is_array($decoded)) {
+        $decoded = $this->decode_customization_data($raw_data);
+        if (! $decoded) {
             return $item_data;
         }
 
@@ -231,10 +231,12 @@ class CPBWOO_Cart
                 $display_value = esc_html(is_scalar($value) ? $value : json_encode($value));
             }
 
+            // WooCommerce expects these exact item-data keys when rendering
+            // cart, checkout, and order item metadata.
             $item_data[] = [
-                'cpbwoo_key'     => $label,
-                'cpbwoo_value'   => $display_value,
-                'cpbwoo_display' => $display_value,
+                'key'            => $label,
+                'value'          => is_scalar($value) ? (string) $value : wp_json_encode($value),
+                'display'        => $display_value,
             ];
         }
 
@@ -247,9 +249,9 @@ class CPBWOO_Cart
      */
     public function add_customization_data_to_mini_cart_image($product_image, $cart_item, $cart_item_key)
     {
-        if (isset($cart_item['customization_data'])) {
-            $raw_data = $cart_item['customization_data'];
-            $data = json_decode($raw_data, true);
+        $raw_data = $this->get_customization_data_string($cart_item);
+        if ($raw_data !== '') {
+            $data = $this->decode_customization_data($raw_data);
 
             if (is_array($data) && isset($data['properties'])) {
                 $image_url = $data['properties']['_img'] ?? $data['properties']['img'] ?? $data['properties']['_image'] ?? $data['properties']['image'] ?? null;
@@ -273,13 +275,13 @@ class CPBWOO_Cart
      */
     public function add_customization_data_to_cart_image($product_images, $cart_item, $cart_item_key)
     {
-        // Validate presence of customization_data
-        if (! isset($cart_item['customization_data'])) {
+        $raw_data = $this->get_customization_data_string($cart_item);
+        if ($raw_data === '') {
             return $product_images;
         }
 
-        $decoded = json_decode($cart_item['customization_data'], true);
-        if (! is_array($decoded)) {
+        $decoded = $this->decode_customization_data($raw_data);
+        if (! $decoded) {
             return $product_images;
         }
 
@@ -312,12 +314,13 @@ class CPBWOO_Cart
      */
     public function add_customization_data_to_order_item($item, $cart_item_key, $values, $order)
     {
-        if (empty($values['customization_data'])) {
+        $raw_data = $this->get_customization_data_string($values);
+        if ($raw_data === '') {
             return;
         }
 
-        $decoded = json_decode($values['customization_data'], true);
-        if (! is_array($decoded)) {
+        $decoded = $this->decode_customization_data($raw_data);
+        if (! $decoded) {
             return;
         }
 
@@ -378,5 +381,39 @@ class CPBWOO_Cart
         }
 
         return $sanitized;
+    }
+
+    /**
+     * Get customization data from cart/order values using prefixed keys.
+     *
+     * @param array $values Cart item or order item values
+     * @return string
+     */
+    private function get_customization_data_string($values) {
+        if (!is_array($values)) {
+            return '';
+        }
+
+        if (isset($values['cpbwoo_customization_data']) && is_string($values['cpbwoo_customization_data'])) {
+            return $values['cpbwoo_customization_data'];
+        }
+
+        return '';
+    }
+
+    /**
+     * Decode JSON customization data into an associative array.
+     *
+     * @param string $customization_data
+     * @return array|null
+     */
+    private function decode_customization_data($customization_data) {
+        if (!is_string($customization_data) || $customization_data === '') {
+            return null;
+        }
+
+        $decoded = json_decode($customization_data, true);
+
+        return is_array($decoded) ? $decoded : null;
     }
 }

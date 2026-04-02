@@ -6,7 +6,7 @@ Tested up to: 6.9
 Requires PHP: 7.4
 WC requires at least: 5.0
 WC tested up to: 9.4
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 Text Domain: cpb-custom-product-builder
 Domain Path: /languages
 License: GPL v2 or later
@@ -98,6 +98,12 @@ Yes, the builder interface can be customized through your CPB dashboard. You can
 6. Order management with customization details
 
 == Changelog ==
+
+= 1.2.0 =
+* Fixed - Store data decryption error preventing shop connection to CPB backend
+* Improved - Plugin update mechanism for better compatibility
+* Fixed - Prevented double-encoding of encrypted store data in CPB app registration and login flows
+* Fixed - Restored CPB customization properties in cart, checkout, and order line items using prefixed cart-item metadata
 
 = 1.1.0 =
 * Fixed - Security vulnerabilities: sanitized all input variables and escaped all output
