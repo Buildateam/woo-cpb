@@ -2,7 +2,7 @@
 /**
  * Plugin Name: CPB - Custom Product Builder for WooCommerce
  * Plugin URI: https://cpbapp.com/integrations
- * Description: Advanced product customization solution with drag-and-drop builder interface. Requires active WooCommerce.com subscription.
+ * Description: Advanced product customization solution with drag-and-drop builder interface. Requires active CPB subscription set up in the CPB app.
  * Version: 1.2.0
  * Author: Custom Product Builder
  * Author URI: https://cpbapp.com
@@ -88,11 +88,9 @@ class CPBWOO_Main {
         /* Initialization -------------------------------------------- */
         add_action( 'before_woocommerce_init', [ $this, 'declare_hpos_compatibility' ] );
 
-        // Initialize WooCommerce.com updater
-        add_action( 'plugins_loaded', [ $this, 'init_wc_updater' ] );
-
-        // Weekly subscription status check
-        add_action( 'admin_init', [ $this, 'weekly_subscription_check' ] );
+        // #woocommerceSubscription: keep legacy WooCommerce subscription hooks commented for easy rollback.
+        // add_action( 'plugins_loaded', [ $this, 'init_wc_updater' ] );
+        // add_action( 'admin_init', [ $this, 'weekly_subscription_check' ] );
 
         // Check if WooCommerce is active
         if ( ! $this->is_woocommerce_active() ) {
@@ -775,12 +773,12 @@ class CPBWOO_Main {
             add_option( self::OPTION_USE_DEFAULT_INITIALIZER, '1' );
         }
 
-        // Send activation notification (silently fail if notification cannot be sent)
-        try {
-            self::send_lifecycle_notification( 'activate' );
-        } catch ( Exception $e ) {
-            // Silently fail - don't block activation
-        }
+        // #woocommerceSubscription: keep legacy activation sync commented for easy rollback.
+        // try {
+        //     self::send_lifecycle_notification( 'activate' );
+        // } catch ( Exception $e ) {
+        //     // Silently fail - don't block activation
+        // }
 
         // Flush rewrite rules
         flush_rewrite_rules();
@@ -790,12 +788,12 @@ class CPBWOO_Main {
      * Plugin deactivation hook
      */
     public static function deactivate() {
-        // Send deactivation notification (silently fail if notification cannot be sent)
-        try {
-            self::send_lifecycle_notification( 'deactivate' );
-        } catch ( Exception $e ) {
-            // Silently fail - don't block deactivation
-        }
+        // #woocommerceSubscription: keep legacy deactivation sync commented for easy rollback.
+        // try {
+        //     self::send_lifecycle_notification( 'deactivate' );
+        // } catch ( Exception $e ) {
+        //     // Silently fail - don't block deactivation
+        // }
 
         // Flush rewrite rules
         flush_rewrite_rules();
