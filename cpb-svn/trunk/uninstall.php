@@ -93,8 +93,8 @@ function cpbwoo_get_lifecycle_notification_url( $action ) {
     return 'https://app.thecustomproductbuilder.com/cpb/platforms/woocommerce/plugin/' . $action;
 }
 
-// Send secure uninstall notification before cleanup
-cpbwoo_send_uninstall_notification();
+// #woocommerceSubscription: subscription lifecycle is managed in the CPB app, so uninstall no longer sends a billing event.
+// cpbwoo_send_uninstall_notification();
 
 // Delete plugin options
 delete_option( 'cpbwoo_shop_name' );

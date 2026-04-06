@@ -12,7 +12,7 @@ Domain Path: /languages
 License: GPL v2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Advanced product customization solution with drag-and-drop builder interface. Requires active WooCommerce.com subscription.
+Advanced product customization solution with drag-and-drop builder interface. Requires active CPB subscription set up in the CPB app.
 
 == Description ==
 
@@ -56,17 +56,17 @@ This plugin requires an active **CPB - Custom Product Builder for WooCommerce su
 
 1. Install the Custom Product Builder plugin from the WooCommerce store
 2. Activate the plugin through the 'Plugins' screen in WordPress
-3. Register or Login. Follow the app link from the plugin to login or sign up at app.thecustomproductbuilder.com with Google or email
-4. Enter your CPB subscription credentials
+3. Open the CPB app from the plugin action links or plugin settings page, then register or login with Google or email
+4. Set up your CPB subscription in the app
 5. Create & Link Products. Create your custom products in the app. Add WooCommerce product URLs during creation, or link them later in Settings → General → Integration → Physical Product URL
 6. Enable CPB on Product. In your WooCommerce product settings, check the "Enable CPB" checkbox to activate the Custom Product Builder for this product
-6. Start creating customizable products!
+7. Start creating customizable products!
 
 == Frequently Asked Questions ==
 
 = Do I need a CPB subscription to use this plugin? =
 
-Yes, this plugin requires an active CPB subscription to function. The plugin acts as a connector between your WooCommerce store and the CPB platform.
+Yes, this plugin requires an active CPB subscription to function. The plugin acts as a connector between your WooCommerce store and the CPB platform. Set the subscription up in the CPB app after installing the plugin.
 
 = Can I try it before purchasing a subscription? =
 
@@ -98,6 +98,9 @@ Yes, the builder interface can be customized through your CPB dashboard. You can
 6. Order management with customization details
 
 == Changelog ==
+
+= Unreleased =
+* Changed - WooCommerce subscription setup now continues in the CPB app instead of plugin activation or deactivation hooks
 
 = 1.2.0 =
 * Fixed - Store data decryption error preventing shop connection to CPB backend
