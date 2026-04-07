@@ -2,7 +2,7 @@
 
 All notable changes to Custom Product Builder for WooCommerce.
 
-## [Unreleased]
+## [1.3.0]
 - Changed - WooCommerce subscription setup now continues in the CPB app instead of plugin activation or deactivation hooks
 
 ## [1.2.0] - 2026-04-02
