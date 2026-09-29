@@ -4,7 +4,7 @@
 [![WooCommerce](https://img.shields.io/badge/WooCommerce-5.0%2B-purple.svg)](https://woocommerce.com/)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-777BB4.svg)](https://php.net/)
 [![License](https://img.shields.io/badge/License-GPL%20v3-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.1.0-orange.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/Version-1.3.0-orange.svg)](CHANGELOG.md)
 
 > Transform your WooCommerce store into a powerful product customization platform
 
@@ -50,7 +50,7 @@ Advanced product customization solution that allows customers to create personal
 
 ## 🚀 Quick Start
 
-1. **Install** - [Download plugin](https://github.com/Buildateam/woo-cpb/releases/latest/download/woo-cpb.zip) and upload to WordPress
+1. **Install** - [Download plugin](https://github.com/Buildateam/woo-cpb/releases/latest) and upload to WordPress
 2. **Activate** - Enable plugin through WordPress admin (`/wp-content/plugins/`)
 3. **Register** - [Sign up or login](https://platform.cpbapp.com/?platform=woocommerce) to CPB platform
 4. **Link Products** - Connect WooCommerce products in CPB dashboard ([see guide](https://platform.cpbapp.com/route/integration-guide?platform=woocommerce))
@@ -60,7 +60,7 @@ Advanced product customization solution that allows customers to create personal
 
 - [Installation Guide](https://platform.cpbapp.com/route/integration-guide?platform=woocommerce)
 - [Plugin FAQ](https://buildateam.zendesk.com/hc/en-us/articles/40833069185300)
-- [App FAQ](https://buildateam.zendesk.com/hc/en-us/categories/360001615812-Custom-Product-Builder-App)
+- [App FAQ](https://buildateam.zendesk.com/hc/en-us)
 
 ## 💰 Pricing & Trial
 

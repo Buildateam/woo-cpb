@@ -174,8 +174,8 @@ This plugin connects to the CPB (Custom Product Builder) platform to provide pro
 
 **Service provider**: Buildateam Inc.
 * Service URL: [https://app.thecustomproductbuilder.com](https://app.thecustomproductbuilder.com)
-* Terms of Service: [https://cpbapp.com/terms](https://cpbapp.com/terms)
-* Privacy Policy: [https://cpbapp.com/privacy](https://cpbapp.com/privacy)
+* Terms of Service: [https://cpbplatform.com/license-agreement](https://cpbplatform.com/license-agreement)
+* Privacy Policy: [https://cpbplatform.com/privacy-policy](https://cpbplatform.com/privacy-policy)
 
 = ExchangeRate-API (Fallback Currency Service) =
 
