@@ -232,7 +232,7 @@ class CPBWOO_Main {
             $meta_links = array(
                 'app_docs' => sprintf(
                     '<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
-                    esc_url( 'https://buildateam.zendesk.com/hc/en-us/categories/360001615812-Custom-Product-Builder-App' ),
+                    esc_url( 'https://buildateam.zendesk.com/hc/en-us' ),
                     __( 'App Docs', 'cpb-custom-product-builder' )
                 )
             );
